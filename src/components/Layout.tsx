@@ -165,27 +165,39 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* User Card inside Sidebar Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 min-w-0">
+        <div className="p-3.5 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/40">
+          <div className="flex items-center justify-between gap-2">
+            <button
+              onClick={() => {
+                setCurrentTab('settings');
+                setSearchQuery('');
+              }}
+              className="flex items-center space-x-2.5 min-w-0 flex-1 text-left p-1.5 -ml-1 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+              title="Click to open Account Settings & Password"
+            >
               <img
                 src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}
                 alt={currentUser.name}
-                className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
+                className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 object-cover shrink-0 group-hover:ring-2 group-hover:ring-nexora-blue/50 transition-all"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200">{currentUser.name}</p>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-nexora-blue/10 dark:bg-nexora-blue/20 text-nexora-blue dark:text-nexora-electric border border-nexora-blue/20 dark:border-nexora-blue/30 font-medium">
-                  {currentUser.role}
-                </span>
+                <p className="text-xs font-bold truncate text-slate-800 dark:text-slate-200 group-hover:text-nexora-blue transition-colors">
+                  {currentUser.name}
+                </p>
+                <div className="flex items-center space-x-1 mt-0.5">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-nexora-blue/15 text-nexora-blue dark:text-nexora-electric uppercase">
+                    {currentUser.role}
+                  </span>
+                  <span className="text-[10px] text-slate-400 truncate">Settings</span>
+                </div>
               </div>
-            </div>
+            </button>
             
             {/* Sign Out Button */}
             <button
               onClick={() => setCurrentUser(null)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Sign Out"
+              className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/15 border border-transparent hover:border-red-200 dark:hover:border-red-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+              title="Log Out (Sign Out)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
             </button>

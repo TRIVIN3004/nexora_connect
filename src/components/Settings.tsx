@@ -6,7 +6,13 @@ import {
   Bell, 
   ShieldAlert, 
   CheckCircle,
-  Server
+  Server,
+  Lock,
+  Key,
+  Eye,
+  EyeOff,
+  LogOut,
+  AlertCircle
 } from 'lucide-react';
 import type { NotificationPreference } from '../services/database';
 
@@ -20,6 +26,15 @@ export const Settings: React.FC = () => {
   const [profileDesig, setProfileDesig] = useState(currentUser.designation || '');
   const [profileOrg, setProfileOrg] = useState(currentUser.organization || 'Nexora Technologies');
   const [profileAvatar, setProfileAvatar] = useState(currentUser.avatarUrl || '');
+
+  // Password Change States
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [passSuccess, setPassSuccess] = useState<string | null>(null);
+  const [passError, setPassError] = useState<string | null>(null);
 
   // Notifications preferences
   const [emailEnabled, setEmailEnabled] = useState(true);
@@ -90,6 +105,41 @@ export const Settings: React.FC = () => {
 
     setSuccessMsg(true);
     setTimeout(() => setSuccessMsg(false), 3000);
+    triggerRefresh();
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassError(null);
+    setPassSuccess(null);
+
+    const actualPassword = currentUser.password || 'Nexora@123';
+    if (currentPassword !== actualPassword) {
+      setPassError('Current password is incorrect. Please enter your existing password.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPassError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPassError('New password and confirmation password do not match.');
+      return;
+    }
+
+    const updatedUser = {
+      ...currentUser,
+      password: newPassword
+    };
+
+    db.updateUser(updatedUser);
+    setCurrentUser(updatedUser);
+    setPassSuccess('Password updated successfully! Please use your new password on your next sign in.');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
     triggerRefresh();
   };
 
@@ -320,6 +370,108 @@ export const Settings: React.FC = () => {
             </form>
           </div>
 
+          {/* Security & Password Change Card */}
+          <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow p-5">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b pb-2 border-slate-100 dark:border-slate-800 mb-4 flex items-center">
+              <Lock className="w-4 h-4 mr-1 text-nexora-blue" /> Security & Password
+            </h3>
+
+            {passSuccess && (
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold flex items-center animate-fade-in">
+                <CheckCircle size={16} className="mr-2 shrink-0 text-emerald-500" />
+                <span>{passSuccess}</span>
+              </div>
+            )}
+
+            {passError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold flex items-center animate-fade-in">
+                <AlertCircle size={16} className="mr-2 shrink-0 text-red-500" />
+                <span>{passError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPass ? 'text' : 'password'}
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter your current password"
+                    className="w-full pl-3 pr-10 py-2 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-nexora-blue font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPass(!showCurrentPass)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    {showCurrentPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                    New Password (Min 6 Characters)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPass ? 'text' : 'password'}
+                      required
+                      minLength={6}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="w-full pl-3 pr-10 py-2 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-nexora-blue font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                      {showNewPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    className="w-full px-3 py-2 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-nexora-blue font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-between">
+                <p className="text-[11px] text-slate-400">
+                  Default initial company password is <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[10px] text-slate-600 dark:text-slate-300">Nexora@123</code>
+                </p>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-gradient-to-r from-nexora-blue to-sky-600 hover:from-nexora-blue/90 hover:to-sky-700 text-white rounded-lg text-xs font-semibold shadow-md active:scale-95 transition-all flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Key size={13} />
+                  <span>Update Password</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+
         </div>
 
         {/* Right Card: Admin SMTP Settings (1/3) */}
@@ -493,6 +645,39 @@ export const Settings: React.FC = () => {
               </p>
             </div>
           )}
+
+          {/* Account Session & Sign Out Card */}
+          <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow p-5 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 border-b pb-2 border-slate-100 dark:border-slate-800 flex items-center">
+              <LogOut className="w-4 h-4 mr-1.5 text-red-500" /> Account Session
+            </h3>
+
+            <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center space-x-3">
+              <img 
+                src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} 
+                alt={currentUser.name} 
+                className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 object-cover shrink-0" 
+              />
+              <div className="truncate min-w-0">
+                <div className="font-bold text-xs text-slate-900 dark:text-white truncate">{currentUser.name}</div>
+                <div className="text-[10px] text-slate-500 font-mono truncate">{currentUser.email}</div>
+                <div className="text-[9px] text-slate-400 capitalize">{currentUser.role} Account</div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Need to end your current workspace session on this device?
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setCurrentUser(null)}
+              className="w-full py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2"
+            >
+              <LogOut size={14} />
+              <span>Sign Out of Nexora Connect</span>
+            </button>
+          </div>
 
         </div>
 
