@@ -34,34 +34,208 @@ const mockUsers = [
     role: 'ADMIN',
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     designation: 'Nexora Administrator',
-    organization: 'Nexora Technologies'
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   },
   {
-    id: 'mentor@nexora.com',
-    email: 'mentor@nexora.com',
-    name: 'Dr. Alan Grant',
+    id: 'trivintrivin2005@gmail.com',
+    email: 'trivintrivin2005@gmail.com',
+    name: 'Trivin',
+    role: 'ADMIN',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Platform Administrator',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'mrohith0089@gmail.com',
+    email: 'mrohith0089@gmail.com',
+    name: 'ROHITH M',
     role: 'EMPLOYEE',
-    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
-    designation: 'Lead AI Researcher',
-    organization: 'Nexora Technologies'
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   },
   {
-    id: 'employee@nexora.com',
-    email: 'employee@nexora.com',
-    name: 'Alex Mercer',
+    id: 'srikreekszoldych@gmail.com',
+    email: 'srikreekszoldych@gmail.com',
+    name: 'M. Srijith',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'waseemay1127@gmail.com',
+    email: 'waseemay1127@gmail.com',
+    name: 'Waseem Ahamed A J',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'kishoremohan1307@gmail.com',
+    email: 'kishoremohan1307@gmail.com',
+    name: 'Kishore Mohan',
     role: 'EMPLOYEE',
     avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
-    designation: 'Senior Backend Engineer',
-    organization: 'Nexora Technologies'
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   },
   {
-    id: 'intern@nexora.com',
-    email: 'intern@nexora.com',
-    name: 'Peter Parker',
+    id: 'aakashrajselvam@gmail.com',
+    email: 'aakashrajselvam@gmail.com',
+    name: 'Akashraj',
     role: 'EMPLOYEE',
     avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
-    designation: 'Frontend Intern',
-    organization: 'Nexora Technologies'
+    designation: 'AI / Data Specialist',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'sivaranjanisumathi75@gmail.com',
+    email: 'sivaranjanisumathi75@gmail.com',
+    name: 'Sivaranjani',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'pavithraayohan@gmail.com',
+    email: 'pavithraayohan@gmail.com',
+    name: 'Pavithraa S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'naveensv0112@gmail.com',
+    email: 'naveensv0112@gmail.com',
+    name: 'Naveen',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'justinsam1902@gmail.com',
+    email: 'justinsam1902@gmail.com',
+    name: 'Raghul Prasath A',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'sankarleo23@gmail.com',
+    email: 'sankarleo23@gmail.com',
+    name: 'Sankar R',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'santho06raj@gmail.com',
+    email: 'santho06raj@gmail.com',
+    name: 'Santhoshraj V',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'dineshkumar.muthuvel2011@gmail.com',
+    email: 'dineshkumar.muthuvel2011@gmail.com',
+    name: 'M. Dinesh Kumar',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Technical Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'pathmavathis2005@gmail.com',
+    email: 'pathmavathis2005@gmail.com',
+    name: 'Pathmavathi S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'poojavellingiri15@gmail.com',
+    email: 'poojavellingiri15@gmail.com',
+    name: 'Pooja V',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'ssujitha9307@gmail.com',
+    email: 'ssujitha9307@gmail.com',
+    name: 'Sujitha S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'naujawanf@gmail.com',
+    email: 'naujawanf@gmail.com',
+    name: 'Mohammad Farman Ahmed Naujawan H',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'akshuraj2005@gmail.com',
+    email: 'akshuraj2005@gmail.com',
+    name: 'Akshaya R',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'prishaaraj06@gmail.com',
+    email: 'prishaaraj06@gmail.com',
+    name: 'Prishaa Kamal',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'aswin3908@gmail.com',
+    email: 'aswin3908@gmail.com',
+    name: 'Aswin',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1480429370139-e0132c086e2a?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
@@ -328,7 +502,8 @@ function mapUserToDb(u) {
     role: u.role,
     avatar_url: u.avatarUrl || null,
     designation: u.designation || null,
-    organization: u.organization || null
+    organization: u.organization || 'Nexora Technologies',
+    password: u.password || 'Nexora@123'
   };
 }
 
