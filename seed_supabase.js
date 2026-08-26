@@ -236,6 +236,26 @@ const mockUsers = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'yani.muizz2008@gmail.com',
+    email: 'yani.muizz2008@gmail.com',
+    name: 'Yani Muizz H',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'sanjayselvakumar550@gmail.com',
+    email: 'sanjayselvakumar550@gmail.com',
+    name: 'Sanjay S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 

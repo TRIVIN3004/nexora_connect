@@ -391,6 +391,26 @@ const defaultUsers: User[] = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'yani.muizz2008@gmail.com',
+    email: 'yani.muizz2008@gmail.com',
+    name: 'Yani Muizz H',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'sanjayselvakumar550@gmail.com',
+    email: 'sanjayselvakumar550@gmail.com',
+    name: 'Sanjay S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
@@ -894,14 +914,14 @@ export class NexoraDatabase {
   private onSyncCallback: (() => void) | null = null;
 
   constructor() {
-    // Clear old mock data cache once to seed the 20 real employee accounts
-    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_team_roster_v1')) {
+    // Clear old mock data cache once to seed the complete 23 employee accounts
+    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_team_roster_v2')) {
       const keysToClear = [
         'nexora_users',
         'nexora_deleted_users'
       ];
       keysToClear.forEach(k => localStorage.removeItem(k));
-      localStorage.setItem('nexora_team_roster_v1', 'true');
+      localStorage.setItem('nexora_team_roster_v2', 'true');
     }
 
     if (typeof window !== 'undefined' && !localStorage.getItem('nexora_publish_cleanup_v1')) {
