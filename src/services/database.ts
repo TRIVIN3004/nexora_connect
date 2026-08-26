@@ -973,11 +973,26 @@ const defaultFeedbacks: Feedback[] = [
 
 function getStorageItem<T>(key: string, defaultValue: T): T {
   const data = localStorage.getItem(key);
-  if (!data) {
+  if (!data || data === 'null' || data === 'undefined') {
     localStorage.setItem(key, JSON.stringify(defaultValue));
     return defaultValue;
   }
-  return JSON.parse(data) as T;
+  try {
+    const parsed = JSON.parse(data);
+    if (parsed === null || parsed === undefined) {
+      localStorage.setItem(key, JSON.stringify(defaultValue));
+      return defaultValue;
+    }
+    // If defaultValue is an array but parsed is not an array, reset and fallback
+    if (Array.isArray(defaultValue) && !Array.isArray(parsed)) {
+      localStorage.setItem(key, JSON.stringify(defaultValue));
+      return defaultValue;
+    }
+    return parsed as T;
+  } catch (e) {
+    localStorage.setItem(key, JSON.stringify(defaultValue));
+    return defaultValue;
+  }
 }
 
 function setStorageItem<T>(key: string, value: T): void {
