@@ -172,18 +172,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         {/* User Card inside Sidebar Footer */}
         <div className="p-4 border-t border-slate-800/80 bg-slate-950/20">
-          <div className="flex items-center space-x-3">
-            <img
-              src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}
-              alt={currentUser.name}
-              className="w-10 h-10 rounded-full border border-slate-700 object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate text-slate-200">{currentUser.name}</p>
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-nexora-blue/20 text-nexora-electric border border-nexora-blue/30 font-medium">
-                {currentUser.role}
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 min-w-0">
+              <img
+                src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}
+                alt={currentUser.name}
+                className="w-10 h-10 rounded-full border border-slate-700 object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate text-slate-200">{currentUser.name}</p>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-nexora-blue/20 text-nexora-electric border border-nexora-blue/30 font-medium">
+                  {currentUser.role}
+                </span>
+              </div>
             </div>
+            
+            {/* Sign Out Button */}
+            <button
+              onClick={() => setCurrentUser(null)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Sign Out"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            </button>
           </div>
         </div>
       </aside>

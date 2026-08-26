@@ -7,7 +7,7 @@ export interface AppContextType {
   db: NexoraDatabase;
   dispatcher: NotificationDispatcher;
   currentUser: User;
-  setCurrentUser: (user: User) => void;
+  setCurrentUser: (user: User | null) => void;
   currentTab: string;
   setCurrentTab: (tab: string) => void;
   theme: 'light' | 'dark';
@@ -23,12 +23,22 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const nexoraDb = new NexoraDatabase();
 const nexoraDispatcher = new NotificationDispatcher(nexoraDb);
 
+export const guestUser: User = {
+  id: 'guest',
+  email: 'guest@nexoratechs.com',
+  name: 'Guest User',
+  role: 'EMPLOYEE',
+  avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+  designation: 'Guest',
+  organization: 'Nexora Technologies'
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentUser, setCurrentUserState] = useState<User>(() => {
     const saved = localStorage.getItem('nexora_current_user_email');
-    const email = saved || 'contact@nexoratechs.com'; // Default user is admin
-    return nexoraDb.getUser(email) || nexoraDb.getUsers()[0];
+    if (!saved) return guestUser;
+    return nexoraDb.getUser(saved) || guestUser;
   });
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -41,9 +51,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRefreshKey(prev => prev + 1);
   };
 
-  const setCurrentUser = (user: User) => {
-    setCurrentUserState(user);
-    localStorage.setItem('nexora_current_user_email', user.email);
+  const setCurrentUser = (user: User | null) => {
+    const targetUser = user || guestUser;
+    setCurrentUserState(targetUser);
+    if (user && user.email !== guestUser.email) {
+      localStorage.setItem('nexora_current_user_email', user.email);
+    } else {
+      localStorage.removeItem('nexora_current_user_email');
+    }
     triggerRefresh();
   };
 

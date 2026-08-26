@@ -14,6 +14,7 @@ import { Settings } from './components/Settings';
 import { AdminPanel } from './components/AdminPanel';
 import { StressReliefGames } from './components/StressReliefGames';
 import { RegisterProfile } from './components/RegisterProfile';
+import { Login } from './components/Login';
 import { 
   Search, 
   ArrowRight, 
@@ -26,6 +27,7 @@ import {
 
 const AppContent: React.FC = () => {
   const { currentTab, setCurrentTab, searchQuery, setSearchQuery, db, currentUser } = useApp();
+  const [authView, setAuthView] = React.useState<'login' | 'register'>('login');
 
   // Listen to custom tab event from Knowledge Library redirects
   useEffect(() => {
@@ -35,6 +37,30 @@ const AppContent: React.FC = () => {
     window.addEventListener('setTab_editor', handleSetTabEditor);
     return () => window.removeEventListener('setTab_editor', handleSetTabEditor);
   }, [setCurrentTab]);
+
+  // Block dashboard and show login/register view if guest
+  if (!currentUser || currentUser.email === 'guest@nexoratechs.com') {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-dark-bg text-slate-800 dark:text-slate-200 transition-colors duration-300 flex items-center justify-center p-4">
+        {authView === 'login' ? (
+          <Login onToggleView={() => setAuthView('register')} />
+        ) : (
+          <div className="w-full max-w-xl">
+            <RegisterProfile />
+            <div className="mt-4 text-center text-xs text-slate-500 dark:text-slate-455">
+              Already have an account?{' '}
+              <button
+                onClick={() => setAuthView('login')}
+                className="text-nexora-blue dark:text-nexora-electric hover:underline font-bold cursor-pointer"
+              >
+                Sign In
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // Execute Global Search
   const performGlobalSearch = () => {
