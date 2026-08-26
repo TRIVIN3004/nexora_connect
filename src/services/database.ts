@@ -628,7 +628,7 @@ export class NexoraDatabase {
 
   constructor() {
     // Clear old mock data cache once, preserving Supabase connection settings
-    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_data_reset_v1')) {
+    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_data_reset_v2')) {
       const keysToClear = [
         'nexora_users',
         'nexora_webinars',
@@ -642,10 +642,11 @@ export class NexoraDatabase {
         'nexora_bookmarks',
         'nexora_notifications',
         'nexora_audit_logs',
-        'nexora_current_user_email'
+        'nexora_current_user_email',
+        'nexora_theme'
       ];
       keysToClear.forEach(k => localStorage.removeItem(k));
-      localStorage.setItem('nexora_data_reset_v1', 'true');
+      localStorage.setItem('nexora_data_reset_v2', 'true');
     }
 
     this.initSupabase();

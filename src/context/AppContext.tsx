@@ -43,7 +43,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('nexora_theme');
-    return (saved as 'light' | 'dark') || 'dark'; // Default theme is dark for maximum premium look
+    return (saved as 'light' | 'dark') || 'light'; // Default theme is light
   });
   const [searchQuery, setSearchQuery] = useState('');
 
