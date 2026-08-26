@@ -165,12 +165,11 @@ export class EmailService {
     console.log(`[SMTP SIMULATOR] Email logged to sandbox for ${to}. Subject: ${subject}.`);
 
     // Real email dispatch if Resend API Key is configured
-    const provider = localStorage.getItem('nexora_email_provider');
-    const apiKey = localStorage.getItem('nexora_email_api_key');
-    const fromAddress = localStorage.getItem('nexora_email_from') || 'onboarding@resend.dev';
+    const apiKey = (import.meta as any).env?.VITE_RESEND_API_KEY || localStorage.getItem('nexora_email_api_key');
+    const fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from') || 'onboarding@resend.dev';
 
-    if (provider === 'Resend' && apiKey) {
-      // Free onboarding sender can only deliver to the verified address (contactnexoratechs@gmail.com)
+    if (apiKey) {
+      // If still using default onboarding sandbox, limit to verified account; if custom domain is configured, send directly to recipient
       const recipient = fromAddress === 'onboarding@resend.dev' ? 'contactnexoratechs@gmail.com' : to;
 
       fetch('https://api.resend.com/emails', {
