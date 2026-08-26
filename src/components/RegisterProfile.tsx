@@ -32,7 +32,6 @@ export const RegisterProfile: React.FC = () => {
   const [password, setPassword] = useState('');
   const [designation, setDesignation] = useState('');
   const [organization, setOrganization] = useState('Nexora Technologies');
-  const [role, setRole] = useState<'EMPLOYEE' | 'ADMIN'>('EMPLOYEE');
   const [avatarUrl, setAvatarUrl] = useState(PRESET_AVATARS[0]);
   const [customAvatar, setCustomAvatar] = useState('');
 
@@ -79,7 +78,7 @@ export const RegisterProfile: React.FC = () => {
         id: email.trim().toLowerCase(),
         email: email.trim().toLowerCase(),
         name: name.trim(),
-        role: role,
+        role: 'EMPLOYEE',
         avatarUrl: finalAvatarUrl,
         designation: designation.trim() || 'Associate Engineer',
         organization: organization.trim() || 'Nexora Technologies',
@@ -264,37 +263,6 @@ export const RegisterProfile: React.FC = () => {
                     className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-dark-bg/40 text-slate-900 dark:text-slate-150 focus:ring-1 focus:ring-nexora-blue focus:border-nexora-blue focus:outline-none transition-all"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* System Role Switcher */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-350 mb-1.5 uppercase tracking-wider">
-                System Role Access
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole('EMPLOYEE')}
-                  className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
-                    role === 'EMPLOYEE'
-                      ? 'border-nexora-blue bg-nexora-blue/5 text-nexora-blue dark:text-nexora-electric dark:border-nexora-electric/30'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900/40'
-                  }`}
-                >
-                  <span>EMPLOYEE</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('ADMIN')}
-                  className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
-                    role === 'ADMIN'
-                      ? 'border-nexora-blue bg-nexora-blue/5 text-nexora-blue dark:text-nexora-electric dark:border-nexora-electric/30'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900/40'
-                  }`}
-                >
-                  <span>ADMINISTRATOR</span>
-                </button>
               </div>
             </div>
           </div>
