@@ -51,8 +51,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const userNotifs = allNotifs.filter(n => n.userId === currentUser.email);
   const unreadCount = userNotifs.filter(n => !n.read).length;
 
-  const usersList = db.getUsers();
-
   // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -63,16 +61,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedEmail = e.target.value;
-    const selectedUser = db.getUser(selectedEmail);
-    if (selectedUser) {
-      setCurrentUser(selectedUser);
-      // Reset search
-      setSearchQuery('');
-    }
-  };
 
   const markRead = (notifId: string) => {
     db.markNotificationRead(notifId);
@@ -247,38 +235,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           {/* Right Header Panel Actions */}
           <div className="flex items-center space-x-3.5">
-
-            {/* Role Simulation Switcher Widget */}
-            <div className="flex items-center space-x-2 border-r border-slate-200 dark:border-slate-800 pr-3.5">
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium hidden lg:inline">
-                Test Role:
-              </span>
-              <select
-                value={currentUser.email}
-                onChange={handleRoleChange}
-                className="text-xs font-semibold px-2 py-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 focus:outline-none"
-              >
-                {usersList.map(u => (
-                  <option key={u.email} value={u.email}>
-                    {u.name} ({u.role})
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => {
-                  setCurrentTab('register');
-                  setSearchQuery('');
-                }}
-                className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                  currentTab === 'register'
-                    ? 'bg-nexora-blue text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700/85'
-                }`}
-                title="Register a new employee profile"
-              >
-                <span>+ Register</span>
-              </button>
-            </div>
 
             {/* Quick Broadcast Action Button */}
             <button
