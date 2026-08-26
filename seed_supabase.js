@@ -266,6 +266,16 @@ const mockUsers = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'amirthavarshinitd@gmail.com',
+    email: 'amirthavarshinitd@gmail.com',
+    name: 'Amirthavarshini T D',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 

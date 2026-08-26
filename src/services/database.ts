@@ -421,6 +421,16 @@ const defaultUsers: User[] = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'amirthavarshinitd@gmail.com',
+    email: 'amirthavarshinitd@gmail.com',
+    name: 'Amirthavarshini T D',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
@@ -924,14 +934,14 @@ export class NexoraDatabase {
   private onSyncCallback: (() => void) | null = null;
 
   constructor() {
-    // Clear old mock data cache once to seed the complete 24 employee accounts
-    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_team_roster_v3')) {
+    // Clear old mock data cache once to seed the complete 25 employee accounts
+    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_team_roster_v4')) {
       const keysToClear = [
         'nexora_users',
         'nexora_deleted_users'
       ];
       keysToClear.forEach(k => localStorage.removeItem(k));
-      localStorage.setItem('nexora_team_roster_v3', 'true');
+      localStorage.setItem('nexora_team_roster_v4', 'true');
     }
 
     if (typeof window !== 'undefined' && !localStorage.getItem('nexora_publish_cleanup_v1')) {
