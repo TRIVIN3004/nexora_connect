@@ -1,4 +1,5 @@
 import { NexoraDatabase } from './database';
+import type { CompanyMessage } from './database';
 import { EmailService } from './email';
 
 export class NotificationDispatcher {
@@ -305,4 +306,31 @@ export class NotificationDispatcher {
       }
     });
   }
+
+  // 9. Company-Wide Broadcast Message
+  dispatchCompanyBroadcast(message: CompanyMessage) {
+    const allUsers = this.db.getUsers();
+    const summary = message.content.length > 120 ? message.content.slice(0, 117) + '...' : message.content;
+
+    allUsers.forEach(user => {
+      this.notifyUser(
+        user.email,
+        `📢 ${message.title}`,
+        summary,
+        'ANNOUNCEMENT',
+        () => {
+          EmailService.sendCompanyBroadcast(
+            user.email,
+            user.name,
+            message.title,
+            message.content,
+            message.senderName,
+            message.category,
+            message.priority
+          );
+        }
+      );
+    });
+  }
 }
+

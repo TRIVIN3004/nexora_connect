@@ -8,8 +8,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Eye,
-  EyeOff,
-  Sparkles
+  EyeOff
 } from 'lucide-react';
 
 interface LoginProps {
@@ -79,12 +78,6 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
     }, 600);
   };
 
-  const fillQuickLogin = (userEmail: string, userPass: string) => {
-    setEmail(userEmail);
-    setPassword(userPass);
-    setErrorMsg('');
-  };
-
   return (
     <div className="max-w-md w-full mx-auto my-6 animate-slide-up">
       {/* Brand logo & header */}
@@ -140,7 +133,7 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="sarah@nexora.com"
+                placeholder="name@company.com"
                 className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-nexora-blue/20 focus:border-nexora-blue focus:outline-none transition-all"
               />
             </div>
@@ -205,50 +198,6 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
             <ChevronRight size={14} />
           </button>
         </form>
-
-        {/* Quick Demo Credentials */}
-        <div className="mt-5 pt-4 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
-              <Sparkles size={11} className="mr-1 text-amber-500" /> Quick Demo Accounts:
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono">Pass: Nexora@123</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => fillQuickLogin('contact@nexoratechs.com', 'Nexora@123')}
-              className="px-2.5 py-2 rounded-xl text-[11px] font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-left transition-all hover:border-slate-300 active:scale-95 cursor-pointer"
-            >
-              <div className="font-semibold text-slate-800">👑 Admin</div>
-              <div className="text-[9px] text-slate-400 truncate">contact@nexoratechs.com</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillQuickLogin('admin@nexora.com', 'Nexora@123')}
-              className="px-2.5 py-2 rounded-xl text-[11px] font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-left transition-all hover:border-slate-300 active:scale-95 cursor-pointer"
-            >
-              <div className="font-semibold text-slate-800">⭐ Director</div>
-              <div className="text-[9px] text-slate-400 truncate">admin@nexora.com</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillQuickLogin('employee@nexora.com', 'Nexora@123')}
-              className="px-2.5 py-2 rounded-xl text-[11px] font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-left transition-all hover:border-slate-300 active:scale-95 cursor-pointer"
-            >
-              <div className="font-semibold text-slate-800">💼 Engineer</div>
-              <div className="text-[9px] text-slate-400 truncate">employee@nexora.com</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillQuickLogin('intern@nexora.com', 'Nexora@123')}
-              className="px-2.5 py-2 rounded-xl text-[11px] font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-left transition-all hover:border-slate-300 active:scale-95 cursor-pointer"
-            >
-              <div className="font-semibold text-slate-800">🎓 Intern</div>
-              <div className="text-[9px] text-slate-400 truncate">intern@nexora.com</div>
-            </button>
-          </div>
-        </div>
 
         {/* Toggle to register */}
         <div className="mt-5 text-center text-xs text-slate-500 border-t border-slate-100 pt-4">

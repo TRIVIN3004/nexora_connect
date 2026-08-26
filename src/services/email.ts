@@ -384,4 +384,49 @@ export class EmailService {
     `;
     this.sendMockEmail(to, subject, 'KNOWLEDGE_NOTE_APPROVAL', body);
   }
+
+  // 8. Company-Wide Broadcast Message
+  static sendCompanyBroadcast(
+    to: string,
+    userName: string,
+    title: string,
+    content: string,
+    senderName: string,
+    category: string,
+    priority: string
+  ) {
+    const priorityColor = priority === 'URGENT' ? '#EF4444' : priority === 'HIGH' ? '#F59E0B' : '#0878C9';
+    const subject = `[Company Notice] ${title}`;
+    const body = `
+      <div class="welcome">Hello ${userName},</div>
+      <p>A new company-wide message has been broadcast to all team members by <strong>${senderName}</strong>:</p>
+      
+      <div class="details-card" style="border-left-color: ${priorityColor};">
+        <div style="margin-bottom: 8px;">
+          <span style="font-size: 10px; font-weight: bold; background-color: ${priorityColor}; color: #ffffff; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">
+            ${priority} PRIORITY
+          </span>
+          <span style="font-size: 11px; color: #64748B; margin-left: 8px; font-weight: 600;">
+            ${category}
+          </span>
+        </div>
+        <div class="details-row">
+          <div class="label">Subject</div>
+          <div class="value" style="font-size: 16px; font-weight: bold; color: #0F172A; margin-top: 4px;">${title}</div>
+        </div>
+        <div class="details-row" style="margin-top: 14px;">
+          <div class="label">Message Content</div>
+          <div class="value" style="margin-top: 6px; line-height: 1.6; white-space: pre-wrap; font-size: 13px;">${content}</div>
+        </div>
+      </div>
+      
+      <div class="btn-container">
+        <a href="#broadcasts" class="btn">View on Nexora Connect</a>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-top: 20px;">
+        This communication was delivered to all registered personnel across Nexora Technologies.
+      </p>
+    `;
+    this.sendMockEmail(to, subject, 'COMPANY_BROADCAST', body);
+  }
 }

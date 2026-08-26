@@ -191,7 +191,7 @@ export const RegisterProfile: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="sarah@nexora.com"
+                    placeholder="name@company.com"
                     className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-dark-bg/40 text-slate-900 dark:text-slate-150 focus:ring-1 focus:ring-nexora-blue focus:border-nexora-blue focus:outline-none transition-all"
                   />
                 </div>

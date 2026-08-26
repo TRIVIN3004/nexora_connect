@@ -32,17 +32,8 @@ const mockUsers = [
     email: 'contact@nexoratechs.com',
     name: 'Administrator',
     role: 'ADMIN',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-    designation: 'System Administrator',
-    organization: 'Nexora Technologies'
-  },
-  {
-    id: 'admin@nexora.com',
-    email: 'admin@nexora.com',
-    name: 'Sarah Connor',
-    role: 'ADMIN',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-    designation: 'Senior Operations Director',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    designation: 'Nexora Administrator',
     organization: 'Nexora Technologies'
   },
   {
@@ -156,7 +147,7 @@ const mockMeetings = [
     id: 'meet-2',
     title: 'Sprint Planning & Backlog Grooming',
     description: 'Review backlog, estimate issues, and define the roadmap for the Nexora dashboard enhancements.',
-    organizerId: 'admin@nexora.com',
+    organizerId: 'contact@nexoratechs.com',
     participants: ['employee@nexora.com', 'mentor@nexora.com', 'intern@nexora.com'],
     date: '2026-08-25',
     startTime: '15:00',
@@ -171,7 +162,7 @@ const mockMeetings = [
     title: 'Weekly Team Sync',
     description: 'Check progress across frontend modules and discuss devops infrastructure deployments.',
     organizerId: 'employee@nexora.com',
-    participants: ['intern@nexora.com', 'mentor@nexora.com', 'admin@nexora.com'],
+    participants: ['intern@nexora.com', 'mentor@nexora.com', 'contact@nexoratechs.com'],
     date: '2026-08-24',
     startTime: '09:00',
     endTime: '10:00',
@@ -191,7 +182,7 @@ const mockTickets = [
     priority: 'HIGH',
     status: 'ASSIGNED',
     createdById: 'intern@nexora.com',
-    assignedToId: 'admin@nexora.com',
+    assignedToId: 'contact@nexoratechs.com',
     createdAt: '2026-08-25T10:00:00Z',
     updatedAt: '2026-08-25T10:30:00Z'
   },
@@ -212,8 +203,8 @@ const mockComments = [
   {
     id: 'c-1',
     ticketId: 'NX-10025',
-    userId: 'admin@nexora.com',
-    userName: 'Sarah Connor',
+    userId: 'contact@nexoratechs.com',
+    userName: 'Administrator',
     userRole: 'ADMIN',
     comment: 'Looking into this. It appears your AD account was not mapped to the internship evaluation group. Will correct this shortly.',
     createdAt: '2026-08-25T10:15:00Z'
@@ -300,12 +291,31 @@ const mockFeedbacks = [
 const mockAuditLogs = [
   {
     id: 'log-1',
-    userId: 'admin@nexora.com',
-    userName: 'Sarah Connor',
+    userId: 'contact@nexoratechs.com',
+    userName: 'Administrator',
     action: 'CREATE_WEBINAR',
     entity: 'Webinar',
     entityId: 'web-3',
     timestamp: '2026-08-18T09:00:00Z'
+  }
+];
+
+const mockCompanyMessages = [
+  {
+    id: 'msg-welcome-all',
+    senderEmail: 'contact@nexoratechs.com',
+    senderName: 'Administrator',
+    senderAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    senderRole: 'ADMIN',
+    title: '🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
+    content: 'Welcome to our centralized Nexora Connect company portal! All team members can now access interactive tech webinars, project calendars, recorded workshops, internal knowledge base, stress-relief mini-games, and company-wide broadcast alerts.',
+    category: 'Company News',
+    priority: 'NORMAL',
+    targetAudience: 'ALL_EMPLOYEES',
+    createdAt: new Date().toISOString(),
+    pinned: true,
+    acknowledgments: ['contact@nexoratechs.com', 'mentor@nexora.com', 'employee@nexora.com'],
+    tags: ['Welcome', 'Company Update', 'Nexora Connect']
   }
 ];
 
@@ -437,6 +447,25 @@ function mapAuditLogToDb(a) {
   };
 }
 
+function mapCompanyMessageToDb(m) {
+  return {
+    id: m.id,
+    sender_email: m.senderEmail,
+    sender_name: m.senderName,
+    sender_avatar: m.senderAvatar || null,
+    sender_role: m.senderRole || 'EMPLOYEE',
+    title: m.title,
+    content: m.content,
+    category: m.category || 'General Update',
+    priority: m.priority || 'NORMAL',
+    target_audience: m.targetAudience || 'ALL_EMPLOYEES',
+    created_at: m.createdAt,
+    pinned: m.pinned || false,
+    acknowledgments: JSON.stringify(m.acknowledgments || []),
+    tags: JSON.stringify(m.tags || [])
+  };
+}
+
 async function seed() {
   console.log('Starting Supabase Seeding...');
 
@@ -487,6 +516,12 @@ async function seed() {
   const { error: logError } = await client.from('audit_logs').upsert(mockAuditLogs.map(mapAuditLogToDb));
   if (logError) console.error('Error seeding audit logs:', logError.message);
   else console.log('Successfully seeded audit logs!');
+
+  // 9. Seed Company Broadcast Messages
+  console.log('Seeding company broadcast messages...');
+  const { error: cmError } = await client.from('company_messages').upsert(mockCompanyMessages.map(mapCompanyMessageToDb));
+  if (cmError) console.error('Error seeding company messages:', cmError.message);
+  else console.log('Successfully seeded company messages!');
 
   console.log('Seeding completed!');
 }

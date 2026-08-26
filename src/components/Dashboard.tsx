@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Calendar, 
@@ -11,11 +11,16 @@ import {
   ExternalLink,
   PlusCircle,
   HelpCircle,
-  FileText
+  FileText,
+  Megaphone,
+  Pin,
+  Check
 } from 'lucide-react';
+import { BroadcastModal } from './BroadcastModal';
 
 export const Dashboard: React.FC = () => {
   const { db, currentUser, setCurrentTab, triggerRefresh } = useApp();
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -25,6 +30,15 @@ export const Dashboard: React.FC = () => {
   const allTickets = db.getTickets();
   const allNotes = db.getKnowledgeNotes().filter(n => n.status === 'PUBLISHED');
   const allRecordings = db.getRecordings();
+  const allBroadcasts = db.getCompanyMessages();
+
+  // Sort broadcasts: pinned first, then newest
+  const sortedBroadcasts = [...allBroadcasts].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  const recentBroadcasts = sortedBroadcasts.slice(0, 2);
 
   // 1. Calculate Statistics
   const upcomingWebinarsCount = allWebinars.filter(w => w.status === 'UPCOMING' || w.status === 'LIVE').length;
@@ -58,6 +72,11 @@ export const Dashboard: React.FC = () => {
     return 'Good Evening';
   };
 
+  const handleToggleAcknowledge = (msgId: string) => {
+    db.acknowledgeCompanyMessage(msgId, currentUser.email);
+    triggerRefresh();
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-slide-up">
       
@@ -76,14 +95,123 @@ export const Dashboard: React.FC = () => {
               Welcome to the Nexora Connect portal. Explore webinars, coordinate meetings, share knowledge, and collaborate.
             </p>
           </div>
-          <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/15">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-ping"></span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-100">
-              Role: {currentUser.role}
-            </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsBroadcastModalOpen(true)}
+              className="px-4 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/20 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <Megaphone size={14} className="text-yellow-300" />
+              <span>Broadcast to All</span>
+            </button>
+            <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/15">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-ping"></span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-100">
+                Role: {currentUser.role}
+              </span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ====================================================
+          COMPANY BROADCASTS NOTICE WIDGET
+          ==================================================== */}
+      {recentBroadcasts.length > 0 && (
+        <div className="bg-gradient-to-br from-white to-sky-50/30 dark:from-dark-card dark:to-slate-900/60 rounded-2xl border border-nexora-blue/30 dark:border-nexora-blue/20 p-5 md:p-6 premium-shadow space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 border-slate-100 dark:border-slate-800">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 rounded-lg bg-nexora-blue/10 text-nexora-blue dark:text-nexora-electric">
+                <Megaphone size={17} />
+              </div>
+              <div>
+                <h2 className="text-sm md:text-base font-bold font-heading text-slate-900 dark:text-white flex items-center">
+                  Company Broadcasts & Announcements
+                </h2>
+                <p className="text-[11px] text-slate-400">
+                  Active company-wide updates sent to all employees
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setIsBroadcastModalOpen(true)}
+                className="text-xs font-bold text-nexora-blue dark:text-nexora-electric hover:underline flex items-center"
+              >
+                + Send Message to All
+              </button>
+              <button
+                onClick={() => setCurrentTab('broadcasts')}
+                className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1"
+              >
+                <span>View all ({allBroadcasts.length})</span>
+                <ArrowRight size={12} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recentBroadcasts.map(msg => {
+              const hasAcked = (msg.acknowledgments || []).includes(currentUser.email);
+              return (
+                <div
+                  key={msg.id}
+                  className="p-4 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3 hover:border-nexora-blue/50 transition-colors"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        {msg.pinned && (
+                          <span className="p-1 rounded bg-amber-500/10 text-amber-600 text-[10px] font-bold flex items-center">
+                            <Pin size={10} className="mr-0.5" /> Pinned
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold text-nexora-blue dark:text-nexora-electric bg-nexora-blue/10 px-2 py-0.5 rounded-full">
+                          {msg.category}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs md:text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
+                      {msg.title}
+                    </h4>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                      {msg.content}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                    <span className="text-[10px] text-slate-400">
+                      By {msg.senderName}
+                    </span>
+                    <button
+                      onClick={() => handleToggleAcknowledge(msg.id)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1 transition-all ${
+                        hasAcked
+                          ? 'bg-green-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <Check size={12} />
+                      <span>{hasAcked ? 'Acknowledged' : 'Acknowledge'}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Modal Dialog */}
+      <BroadcastModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+      />
 
       {/* ====================================================
           DASHBOARD CARDS INDICATORS

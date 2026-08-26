@@ -18,8 +18,10 @@ import {
   Trash2,
   Check,
   MessageSquare,
-  Gamepad2
+  Gamepad2,
+  Megaphone
 } from 'lucide-react';
+import { BroadcastModal } from './BroadcastModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -41,6 +43,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
   // Retrieve user notifications
@@ -89,6 +92,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Nav items configuration
   const navigationItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, role: 'USER' },
+    { id: 'broadcasts', name: 'Broadcasts', icon: Megaphone, role: 'USER' },
     { id: 'webinars', name: 'Webinars', icon: Calendar, role: 'USER' },
     { id: 'meetings', name: 'Meetings', icon: Calendar, role: 'USER' },
     { id: 'recordings', name: 'Recordings', icon: Video, role: 'USER' },
@@ -276,10 +280,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
             </div>
 
+            {/* Quick Broadcast Action Button */}
+            <button
+              onClick={() => setIsBroadcastModalOpen(true)}
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-nexora-blue to-sky-600 hover:from-nexora-blue/90 hover:to-sky-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+              title="Broadcast message to all company employees"
+            >
+              <Megaphone size={14} className="text-yellow-300 animate-pulse" />
+              <span>Broadcast</span>
+            </button>
+
             {/* Theme Toggle Widget */}
             <button
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all duration-200"
+              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all duration-200 cursor-pointer"
               title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
@@ -289,7 +303,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 relative transition-all duration-200"
+                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 relative transition-all duration-200 cursor-pointer"
               >
                 <Bell size={18} />
                 {unreadCount > 0 && (
@@ -301,7 +315,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
               {/* Dropdown Tray */}
               {notifDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-xl premium-shadow overflow-hidden z-50 animate-slide-up">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-xl premium-shadow overflow-hidden z-50 animate-slide-up">
                   <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       Notifications ({userNotifs.length})
@@ -316,44 +330,74 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     )}
                   </div>
                   
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40">
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40">
                     {userNotifs.length === 0 ? (
                       <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
                         No notifications yet.
                       </div>
                     ) : (
                       userNotifs.map(n => (
-                        <div key={n.id} className={`p-3.5 text-xs transition-colors duration-150 ${n.read ? 'bg-transparent' : 'bg-nexora-blue/5 dark:bg-nexora-blue/10'}`}>
+                        <div 
+                          key={n.id} 
+                          onClick={() => {
+                            if (!n.read) markRead(n.id);
+                            if (n.type === 'ANNOUNCEMENT') {
+                              setCurrentTab('broadcasts');
+                              setNotifDropdownOpen(false);
+                            }
+                          }}
+                          className={`p-3.5 text-xs transition-colors duration-150 cursor-pointer ${
+                            n.read 
+                              ? 'bg-transparent hover:bg-slate-50 dark:hover:bg-slate-900/40' 
+                              : 'bg-nexora-blue/5 dark:bg-nexora-blue/10 hover:bg-nexora-blue/10'
+                          }`}
+                        >
                           <div className="flex justify-between items-start mb-1">
-                            <span className={`font-semibold ${n.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-950 dark:text-slate-100'}`}>
+                            <span className={`font-semibold flex items-center ${n.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-950 dark:text-slate-100'}`}>
+                              {n.type === 'ANNOUNCEMENT' && <Megaphone size={12} className="mr-1 text-nexora-blue shrink-0" />}
                               {n.title}
                             </span>
                             {!n.read && (
                               <button
-                                onClick={() => markRead(n.id)}
-                                className="text-[10px] text-nexora-blue dark:text-nexora-electric hover:underline flex items-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markRead(n.id);
+                                }}
+                                className="text-[10px] text-nexora-blue dark:text-nexora-electric hover:underline flex items-center shrink-0 ml-2"
                                 title="Mark read"
                               >
                                 <Check size={12} className="mr-0.5" /> Read
                               </button>
                             )}
                           </div>
-                          <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                          <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed line-clamp-2">
                             {n.message}
                           </p>
-                          <span className="text-[9px] text-slate-400 block mt-1.5">
-                            {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                          <div className="flex items-center justify-between text-[9px] text-slate-400 mt-1.5">
+                            <span>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            {n.type === 'ANNOUNCEMENT' && (
+                              <span className="text-nexora-blue dark:text-nexora-electric font-semibold">View Broadcast →</span>
+                            )}
+                          </div>
                         </div>
                       ))
                     )}
                   </div>
 
                   {userNotifs.length > 0 && (
-                    <div className="px-4 py-2 border-t border-slate-200 dark:border-dark-border text-center bg-slate-50 dark:bg-slate-900/40">
+                    <div className="px-4 py-2 border-t border-slate-200 dark:border-dark-border text-center bg-slate-50 dark:bg-slate-900/40 flex justify-between items-center text-[10px]">
+                      <button
+                        onClick={() => {
+                          setCurrentTab('broadcasts');
+                          setNotifDropdownOpen(false);
+                        }}
+                        className="font-bold text-nexora-blue dark:text-nexora-electric hover:underline"
+                      >
+                        Company Broadcasts Feed
+                      </button>
                       <button
                         onClick={clearAllNotifs}
-                        className="text-[10px] font-bold text-red-500 hover:text-red-600 flex items-center justify-center mx-auto"
+                        className="font-bold text-red-500 hover:text-red-600 flex items-center"
                       >
                         <Trash2 size={12} className="mr-1" /> Clear all
                       </button>
@@ -424,6 +468,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <span className="text-[10px] mt-1 font-medium">More</span>
         </button>
       </nav>
+
+      {/* Global Broadcast Modal triggered by Header */}
+      <BroadcastModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+      />
     </div>
   );
 };

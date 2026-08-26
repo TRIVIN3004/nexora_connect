@@ -15,6 +15,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { StressReliefGames } from './components/StressReliefGames';
 import { RegisterProfile } from './components/RegisterProfile';
 import { Login } from './components/Login';
+import { CompanyBroadcasts } from './components/CompanyBroadcasts';
 import { 
   Search, 
   ArrowRight, 
@@ -22,7 +23,8 @@ import {
   Video, 
   BookOpen, 
   Ticket, 
-  FolderSync
+  FolderSync,
+  Megaphone
 } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -94,12 +96,21 @@ const AppContent: React.FC = () => {
       return isVisible && (t.id.toLowerCase().includes(query) || t.subject.toLowerCase().includes(query) || t.description.toLowerCase().includes(query));
     });
 
+    const broadcastsRes = db.getCompanyMessages().filter(b => 
+      b.title.toLowerCase().includes(query) || 
+      b.content.toLowerCase().includes(query) || 
+      b.senderName.toLowerCase().includes(query) ||
+      b.category.toLowerCase().includes(query) ||
+      (b.tags || []).some(tag => tag.toLowerCase().includes(query))
+    );
+
     return {
       webinars: webinarsRes,
       meetings: meetingsRes,
       recordings: recordingsRes,
       notes: notesRes,
-      tickets: ticketsRes
+      tickets: ticketsRes,
+      broadcasts: broadcastsRes
     };
   };
 
@@ -113,7 +124,8 @@ const AppContent: React.FC = () => {
                            searchResults.meetings.length + 
                            searchResults.recordings.length + 
                            searchResults.notes.length + 
-                           searchResults.tickets.length;
+                           searchResults.tickets.length +
+                           searchResults.broadcasts.length;
 
       return (
         <div className="space-y-6 max-w-5xl mx-auto animate-fade-in">
@@ -142,6 +154,10 @@ const AppContent: React.FC = () => {
                 </h3>
                 <div className="space-y-3 font-semibold text-xs text-slate-650 dark:text-slate-350">
                   <div className="flex justify-between">
+                    <span>Company Broadcasts:</span>
+                    <span>{searchResults.broadcasts.length} results</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Knowledge Library:</span>
                     <span>{searchResults.notes.length} results</span>
                   </div>
@@ -166,6 +182,35 @@ const AppContent: React.FC = () => {
 
               {/* Detailed results list */}
               <div className="md:col-span-2 space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+                
+                {/* 0. Broadcasts */}
+                {searchResults.broadcasts.length > 0 && (
+                  <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border p-4 space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                      <Megaphone size={12} className="mr-1.5 text-nexora-blue" /> Company Broadcasts ({searchResults.broadcasts.length})
+                    </span>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-850 space-y-2">
+                      {searchResults.broadcasts.map(bc => (
+                        <div 
+                          key={bc.id} 
+                          onClick={() => {
+                            setSearchQuery('');
+                            setCurrentTab('broadcasts');
+                          }}
+                          className="pt-2 flex justify-between items-center group cursor-pointer"
+                        >
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-nexora-blue">{bc.title}</h4>
+                            <p className="text-[9px] text-slate-400">By {bc.senderName} • {bc.category}</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-nexora-blue dark:text-nexora-electric hidden group-hover:inline-flex items-center">
+                            View <ArrowRight size={10} className="ml-1" />
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* 1. Knowledge notes */}
                 {searchResults.notes.length > 0 && (
@@ -295,6 +340,8 @@ const AppContent: React.FC = () => {
     switch (currentTab) {
       case 'dashboard':
         return <Dashboard />;
+      case 'broadcasts':
+        return <CompanyBroadcasts />;
       case 'webinars':
         return <WebinarModule />;
       case 'meetings':

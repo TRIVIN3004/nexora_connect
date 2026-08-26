@@ -150,6 +150,23 @@ export interface NotificationPreference {
   webinarReminders: ('24H' | '1H')[];
 }
 
+export interface CompanyMessage {
+  id: string;
+  senderEmail: string;
+  senderName: string;
+  senderAvatar?: string;
+  senderRole: 'ADMIN' | 'EMPLOYEE';
+  title: string;
+  content: string;
+  category: 'General Update' | 'Important Notice' | 'Company News' | 'Celebration' | 'HR Update' | 'Urgent Alert';
+  priority: 'NORMAL' | 'HIGH' | 'URGENT';
+  targetAudience: 'ALL_EMPLOYEES';
+  createdAt: string;
+  pinned?: boolean;
+  acknowledgments: string[];
+  tags: string[];
+}
+
 export interface AuditLog {
   id: string;
   userId: string; // user email
@@ -168,21 +185,12 @@ const defaultUsers: User[] = [
   {
     id: 'contact@nexoratechs.com',
     email: 'contact@nexoratechs.com',
-    name: 'Admin',
+    name: 'Administrator',
     role: 'ADMIN',
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     designation: 'Nexora Administrator',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
-  },
-  {
-    id: 'admin@nexora.com',
-    email: 'admin@nexora.com',
-    name: 'Sarah Connor',
-    role: 'ADMIN',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-    designation: 'Senior Operations Director',
-    organization: 'Nexora Technologies'
   },
   {
     id: 'mentor@nexora.com',
@@ -210,15 +218,25 @@ const defaultUsers: User[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
     designation: 'Frontend Intern',
     organization: 'Nexora Technologies'
-  },
+  }
+];
+
+const defaultCompanyMessages: CompanyMessage[] = [
   {
-    id: 'user@nexora.com',
-    email: 'user@nexora.com',
-    name: 'John Doe',
-    role: 'EMPLOYEE',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    designation: 'Guest Associate',
-    organization: 'Nexora Technologies'
+    id: 'msg-welcome-all',
+    senderEmail: 'contact@nexoratechs.com',
+    senderName: 'Administrator',
+    senderAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    senderRole: 'ADMIN',
+    title: '🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
+    content: `Hello Everyone! 👋\n\nWelcome to our centralized Nexora Connect company portal! Here is what you can do on our unified platform:\n\n• 📅 Interactive Webinars: Register and attend masterclasses hosted by internal and external leaders.\n• ⏰ Instant Meeting Syncs: Seamlessly schedule 1:1 or team syncs with Google Meet, Zoom, and MS Teams.\n• 📹 Recordings Archive: Replay webinars and meetings anytime.\n• 📚 Knowledge Base & Wiki: Publish technical documentation, best practices, and architecture notes.\n• 🎫 Support Desk: Submit and monitor resolution progress for technical or operational tickets.\n• 📢 Company Broadcasts: Stay informed on company-wide announcements, policy updates, and team milestones.\n\nPlease take a moment to review your profile settings and explore the features. Have a productive week ahead!`,
+    category: 'General Update',
+    priority: 'NORMAL',
+    targetAudience: 'ALL_EMPLOYEES',
+    createdAt: new Date().toISOString(),
+    pinned: true,
+    acknowledgments: ['contact@nexoratechs.com', 'mentor@nexora.com', 'employee@nexora.com'],
+    tags: ['Welcome', 'Company Update', 'Nexora Connect']
   }
 ];
 
@@ -230,7 +248,44 @@ const defaultTickets: Ticket[] = [];
 const defaultComments: TicketComment[] = [];
 const defaultKnowledgeNotes: KnowledgeNote[] = [];
 const defaultBookmarks: Bookmark[] = [];
-const defaultNotifications: Notification[] = [];
+const defaultNotifications: Notification[] = [
+  {
+    id: 'notif-welcome-contact',
+    userId: 'contact@nexoratechs.com',
+    title: '📢 🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
+    message: 'Welcome to our centralized Nexora Connect company portal! Explore webinars, meetings, recordings, and company broadcasts.',
+    type: 'ANNOUNCEMENT',
+    read: false,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'notif-welcome-mentor',
+    userId: 'mentor@nexora.com',
+    title: '📢 🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
+    message: 'Welcome to our centralized Nexora Connect company portal! Explore webinars, meetings, recordings, and company broadcasts.',
+    type: 'ANNOUNCEMENT',
+    read: false,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'notif-welcome-employee',
+    userId: 'employee@nexora.com',
+    title: '📢 🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
+    message: 'Welcome to our centralized Nexora Connect company portal! Explore webinars, meetings, recordings, and company broadcasts.',
+    type: 'ANNOUNCEMENT',
+    read: false,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'notif-welcome-intern',
+    userId: 'intern@nexora.com',
+    title: '📢 🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
+    message: 'Welcome to our centralized Nexora Connect company portal! Explore webinars, meetings, recordings, and company broadcasts.',
+    type: 'ANNOUNCEMENT',
+    read: false,
+    createdAt: new Date().toISOString()
+  }
+];
 const defaultPreferences: NotificationPreference[] = [];
 const defaultAuditLogs: AuditLog[] = [];
 const defaultFeedbacks: Feedback[] = [];
@@ -292,7 +347,8 @@ function mapUserToDb(u: User): any {
     role: u.role,
     avatar_url: u.avatarUrl || null,
     designation: u.designation || null,
-    organization: u.organization || 'Nexora Technologies'
+    organization: u.organization || 'Nexora Technologies',
+    password: u.password || 'Nexora@123'
   };
 }
 
@@ -616,6 +672,44 @@ function mapAuditLogToDb(a: AuditLog): any {
   };
 }
 
+function mapCompanyMessageToClient(m: any): CompanyMessage {
+  return {
+    id: m.id,
+    senderEmail: m.sender_email || m.senderEmail,
+    senderName: m.sender_name || m.senderName,
+    senderAvatar: m.sender_avatar || m.senderAvatar || undefined,
+    senderRole: m.sender_role || m.senderRole || 'EMPLOYEE',
+    title: m.title,
+    content: m.content,
+    category: m.category || 'General Update',
+    priority: m.priority || 'NORMAL',
+    targetAudience: 'ALL_EMPLOYEES',
+    createdAt: m.created_at || m.createdAt,
+    pinned: !!m.pinned,
+    acknowledgments: Array.isArray(m.acknowledgments) ? m.acknowledgments : (typeof m.acknowledgments === 'string' ? JSON.parse(m.acknowledgments || '[]') : []),
+    tags: Array.isArray(m.tags) ? m.tags : (typeof m.tags === 'string' ? JSON.parse(m.tags || '[]') : [])
+  };
+}
+
+function mapCompanyMessageToDb(m: CompanyMessage): any {
+  return {
+    id: m.id,
+    sender_email: m.senderEmail,
+    sender_name: m.senderName,
+    sender_avatar: m.senderAvatar || null,
+    sender_role: m.senderRole,
+    title: m.title,
+    content: m.content,
+    category: m.category,
+    priority: m.priority,
+    target_audience: m.targetAudience,
+    created_at: m.createdAt,
+    pinned: m.pinned || false,
+    acknowledgments: JSON.stringify(m.acknowledgments || []),
+    tags: JSON.stringify(m.tags || [])
+  };
+}
+
 // ----------------------------------------------------
 // DATABASE SERVICE CLASS
 // ----------------------------------------------------
@@ -628,6 +722,15 @@ export class NexoraDatabase {
 
   constructor() {
     // Clear old mock data cache once, preserving Supabase connection settings
+    if (typeof window !== 'undefined' && !localStorage.getItem('nexora_publish_cleanup_v1')) {
+      const keysToClear = [
+        'nexora_users',
+        'nexora_notifications'
+      ];
+      keysToClear.forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('nexora_publish_cleanup_v1', 'true');
+    }
+
     if (typeof window !== 'undefined' && !localStorage.getItem('nexora_data_reset_v3')) {
       const keysToClear = [
         'nexora_users',
@@ -666,6 +769,7 @@ export class NexoraDatabase {
     this.getNotifications();
     this.getNotificationPreferences();
     this.getAuditLogs();
+    this.getCompanyMessages();
   }
 
   initSupabase(): void {
@@ -755,6 +859,15 @@ export class NexoraDatabase {
       if (dbNotifications) setStorageItem('nexora_notifications', dbNotifications.map(mapNotificationToClient));
       if (dbAuditLogs) setStorageItem('nexora_audit_logs', dbAuditLogs.map(mapAuditLogToClient));
 
+      try {
+        const { data: dbCompanyMsgs, error: cmErr } = await this.supabase.from('company_messages').select('*');
+        if (!cmErr && dbCompanyMsgs && dbCompanyMsgs.length > 0) {
+          setStorageItem('nexora_company_messages', dbCompanyMsgs.map(mapCompanyMessageToClient));
+        }
+      } catch (e) {
+        // Table fallback to local storage
+      }
+
       console.log('[SUPABASE] Sync success! Client local cache updated.');
       if (this.onSyncCallback) {
         this.onSyncCallback();
@@ -765,23 +878,48 @@ export class NexoraDatabase {
   }
 
   // Users
+  // Users
   getUsers(): User[] {
-    const rawUsers = getStorageItem<User[]>('nexora_users', defaultUsers);
-    // Merge defaults to ensure new defaults are present, then deduplicate by email
-    const merged = [...defaultUsers, ...rawUsers];
+    const deletedUserKeys = getStorageItem<string[]>('nexora_deleted_users', []);
+    let storedUsers = getStorageItem<User[] | null>('nexora_users', null);
+
+    if (!storedUsers) {
+      storedUsers = defaultUsers;
+    }
+
+    // Filter out deprecated demo accounts, guest accounts, and deleted accounts
+    const validUsers = storedUsers.filter(u => {
+      if (!u || !u.email) return false;
+      const email = u.email.trim().toLowerCase();
+      const id = (u.id || '').trim().toLowerCase();
+      
+      if (email === 'admin@nexora.com' || email === 'user@nexora.com' || email === 'guest@nexoratechs.com') {
+        return false;
+      }
+      if (deletedUserKeys.includes(email) || (id && deletedUserKeys.includes(id))) {
+        return false;
+      }
+      return true;
+    });
+
+    // Deduplicate by clean lowercase email
     const uniqueMap = new Map<string, User>();
-    merged.forEach(u => {
-      if (u.email) {
-        uniqueMap.set(u.email.toLowerCase(), u);
+    validUsers.forEach(u => {
+      const key = u.email.trim().toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, u);
       }
     });
+
     const uniqueUsers = Array.from(uniqueMap.values());
     setStorageItem('nexora_users', uniqueUsers);
     return uniqueUsers;
   }
 
   getUser(email: string): User | undefined {
-    return this.getUsers().find(u => u.email === email);
+    if (!email) return undefined;
+    const cleanEmail = email.trim().toLowerCase();
+    return this.getUsers().find(u => u.email.toLowerCase() === cleanEmail);
   }
 
   updateUser(user: User): void {
@@ -790,6 +928,48 @@ export class NexoraDatabase {
     if (this.supabase) {
       this.supabase.from('users').upsert(mapUserToDb(user)).then(({ error }) => {
         if (error) console.error('[SUPABASE] updateUser error:', error);
+      });
+    }
+  }
+
+  deleteUser(userId: string): void {
+    const cleanId = (userId || '').trim().toLowerCase();
+    if (!cleanId) return;
+
+    // Track in deleted keys list
+    const deletedUserKeys = getStorageItem<string[]>('nexora_deleted_users', []);
+    if (!deletedUserKeys.includes(cleanId)) {
+      deletedUserKeys.push(cleanId);
+    }
+    
+    // Find the user to also blacklist by email and id
+    const currentList = getStorageItem<User[]>('nexora_users', defaultUsers);
+    const targetUser = currentList.find(u => 
+      (u.id && u.id.toLowerCase() === cleanId) || 
+      (u.email && u.email.toLowerCase() === cleanId)
+    );
+    if (targetUser) {
+      const targetEmail = (targetUser.email || '').toLowerCase();
+      const targetId = (targetUser.id || '').toLowerCase();
+      if (targetEmail && !deletedUserKeys.includes(targetEmail)) deletedUserKeys.push(targetEmail);
+      if (targetId && !deletedUserKeys.includes(targetId)) deletedUserKeys.push(targetId);
+    }
+    setStorageItem('nexora_deleted_users', deletedUserKeys);
+
+    // Filter active users list
+    const updatedUsers = currentList.filter(u => {
+      const uEmail = (u.email || '').toLowerCase();
+      const uId = (u.id || '').toLowerCase();
+      return uEmail !== cleanId && uId !== cleanId && !deletedUserKeys.includes(uEmail) && !deletedUserKeys.includes(uId);
+    });
+    setStorageItem('nexora_users', updatedUsers);
+
+    // Supabase sync
+    if (this.supabase) {
+      this.supabase.from('users').delete().eq('id', userId).then(({ error }) => {
+        if (error) {
+          this.supabase?.from('users').delete().eq('email', userId);
+        }
       });
     }
   }
@@ -1419,6 +1599,66 @@ export class NexoraDatabase {
     if (this.supabase) {
       this.supabase.from('audit_logs').upsert(mapAuditLogToDb(log)).then(({ error }) => {
         if (error) console.error('[SUPABASE] createAuditLog error:', error);
+      });
+    }
+  }
+
+  // Company Broadcast Messages
+  getCompanyMessages(): CompanyMessage[] {
+    const raw = getStorageItem<CompanyMessage[]>('nexora_company_messages', defaultCompanyMessages);
+    if (!raw || raw.length === 0) {
+      setStorageItem('nexora_company_messages', defaultCompanyMessages);
+      return defaultCompanyMessages;
+    }
+    return raw;
+  }
+
+  createCompanyMessage(message: Omit<CompanyMessage, 'id' | 'createdAt'>): CompanyMessage {
+    const id = `msg-${Date.now()}`;
+    const newMsg: CompanyMessage = {
+      ...message,
+      id,
+      createdAt: new Date().toISOString(),
+      acknowledgments: message.acknowledgments || [],
+      tags: message.tags || []
+    };
+    const messages = [newMsg, ...this.getCompanyMessages()];
+    setStorageItem('nexora_company_messages', messages);
+    if (this.supabase) {
+      this.supabase.from('company_messages').upsert(mapCompanyMessageToDb(newMsg)).then(({ error }) => {
+        if (error) console.error('[SUPABASE] createCompanyMessage error:', error);
+      });
+    }
+    return newMsg;
+  }
+
+  acknowledgeCompanyMessage(messageId: string, userEmail: string): void {
+    const messages = this.getCompanyMessages().map(m => {
+      if (m.id === messageId) {
+        const acks = m.acknowledgments || [];
+        const alreadyAcked = acks.includes(userEmail);
+        const updatedAcks = alreadyAcked 
+          ? acks.filter(email => email !== userEmail) 
+          : [...acks, userEmail];
+        return { ...m, acknowledgments: updatedAcks };
+      }
+      return m;
+    });
+    setStorageItem('nexora_company_messages', messages);
+    const updated = messages.find(m => m.id === messageId);
+    if (updated && this.supabase) {
+      this.supabase.from('company_messages').upsert(mapCompanyMessageToDb(updated)).then(({ error }) => {
+        if (error) console.error('[SUPABASE] acknowledgeCompanyMessage error:', error);
+      });
+    }
+  }
+
+  deleteCompanyMessage(messageId: string): void {
+    const messages = this.getCompanyMessages().filter(m => m.id !== messageId);
+    setStorageItem('nexora_company_messages', messages);
+    if (this.supabase) {
+      this.supabase.from('company_messages').delete().eq('id', messageId).then(({ error }) => {
+        if (error) console.error('[SUPABASE] deleteCompanyMessage error:', error);
       });
     }
   }

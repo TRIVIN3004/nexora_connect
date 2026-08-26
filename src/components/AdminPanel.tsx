@@ -9,16 +9,28 @@ import {
   Calendar, 
   Clock, 
   Check, 
-  X
+  X,
+  Megaphone,
+  PlusCircle,
+  Search,
+  UserMinus,
+  UserPlus,
+  Trash2,
+  Pin
 } from 'lucide-react';
 import type { User, KnowledgeNote } from '../services/database';
 import { EmailService } from '../services/email';
 import type { SentEmail } from '../services/email';
+import { BroadcastModal } from './BroadcastModal';
 
 export const AdminPanel: React.FC = () => {
-  const { db, currentUser, triggerRefresh } = useApp();
+  const { db, currentUser, triggerRefresh, setCurrentTab } = useApp();
 
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'users' | 'moderation' | 'audit' | 'emails'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'users' | 'broadcasts' | 'moderation' | 'audit' | 'emails'>('analytics');
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deleteSuccessBanner, setDeleteSuccessBanner] = useState<string | null>(null);
   
   // States
   const [selectedLogEmail, setSelectedLogEmail] = useState<SentEmail | null>(null);
@@ -30,6 +42,7 @@ export const AdminPanel: React.FC = () => {
   const allMeetings = db.getMeetings();
   const allTickets = db.getTickets();
   const allNotes = db.getKnowledgeNotes();
+  const allBroadcasts = db.getCompanyMessages();
   const auditLogs = db.getAuditLogs();
   const emailLogs = EmailService.getSentEmailsList();
   const feedbacks = db.getFeedbacks();
@@ -40,6 +53,17 @@ export const AdminPanel: React.FC = () => {
     ? (feedbacks.reduce((sum, f) => sum + f.ratingOverall, 0) / feedbacks.length).toFixed(1) 
     : '0.0';
 
+  const filteredUsers = allUsers.filter(u => {
+    if (!userSearchQuery.trim()) return true;
+    const q = userSearchQuery.toLowerCase();
+    return u.name.toLowerCase().includes(q) || 
+           u.email.toLowerCase().includes(q) || 
+           (u.designation && u.designation.toLowerCase().includes(q)) ||
+           u.role.toLowerCase().includes(q);
+  });
+  const adminCount = allUsers.filter(u => u.role === 'ADMIN').length;
+  const empCount = allUsers.filter(u => u.role === 'EMPLOYEE').length;
+
   const handleRoleChange = (userId: string, newRole: User['role']) => {
     const user = allUsers.find(u => u.id === userId);
     if (user) {
@@ -47,6 +71,30 @@ export const AdminPanel: React.FC = () => {
       db.createAuditLog(currentUser.email, currentUser.name, `CHANGE_USER_ROLE_TO_${newRole}`, 'User', userId);
       triggerRefresh();
     }
+  };
+
+  const confirmDeleteUser = () => {
+    if (!userToDelete) return;
+    const targetEmail = userToDelete.email;
+    const targetId = userToDelete.id;
+    const targetName = userToDelete.name;
+
+    if (targetEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+      alert('Action Denied: You cannot delete your own active administrator account.');
+      setUserToDelete(null);
+      return;
+    }
+
+    db.deleteUser(targetId);
+    db.deleteUser(targetEmail);
+    db.createAuditLog(currentUser.email, currentUser.name, 'DELETE_USER', 'User', targetEmail);
+    setUserToDelete(null);
+    setDeleteSuccessBanner(`Employee "${targetName}" (${targetEmail}) was successfully removed from the workspace directory.`);
+    triggerRefresh();
+
+    setTimeout(() => {
+      setDeleteSuccessBanner(null);
+    }, 5000);
   };
 
   const handleApproveNote = (noteId: string) => {
@@ -75,6 +123,14 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleDeleteBroadcast = (msgId: string, title: string) => {
+    if (window.confirm(`Are you sure you want to delete broadcast "${title}"?`)) {
+      db.deleteCompanyMessage(msgId);
+      db.createAuditLog(currentUser.email, currentUser.name, 'BROADCAST_MESSAGE_DELETED', 'COMPANY_MESSAGE', msgId);
+      triggerRefresh();
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-slide-up">
       
@@ -82,6 +138,7 @@ export const AdminPanel: React.FC = () => {
       <div className="border-b border-slate-200 dark:border-dark-border flex flex-wrap gap-1.5 pb-px">
         {[
           { id: 'analytics', name: 'Dashboard Analytics', icon: Users },
+          { id: 'broadcasts', name: 'Company Broadcasts', icon: Megaphone, badge: allBroadcasts.length },
           { id: 'users', name: 'User Directory', icon: Users },
           { id: 'moderation', name: 'Approvals Queue', icon: ShieldAlert, badge: pendingNotes.length },
           { id: 'emails', name: 'Email Sandbox', icon: Mail, badge: emailLogs.length },
@@ -93,7 +150,7 @@ export const AdminPanel: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2 text-xs font-semibold border-b-2 transition-all duration-150 ${
+              className={`flex items-center space-x-2 px-4 py-2 text-xs font-semibold border-b-2 transition-all duration-150 cursor-pointer ${
                 isActive
                   ? 'border-nexora-blue text-nexora-blue dark:text-nexora-electric'
                   : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
@@ -102,7 +159,7 @@ export const AdminPanel: React.FC = () => {
               <IconComp size={14} />
               <span>{tab.name}</span>
               {tab.badge && tab.badge > 0 ? (
-                <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
+                <span className="bg-nexora-blue/20 text-nexora-blue dark:text-nexora-electric text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
                   {tab.badge}
                 </span>
               ) : null}
@@ -118,6 +175,7 @@ export const AdminPanel: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { name: 'Total Accounts', val: allUsers.length, icon: Users, color: 'text-blue-500 bg-blue-500/10' },
+            { name: 'Company Broadcasts', val: allBroadcasts.length, icon: Megaphone, color: 'text-sky-500 bg-sky-500/10' },
             { name: 'Upcoming Webinars', val: allWebinars.filter(w => w.status === 'UPCOMING').length, icon: Calendar, color: 'text-purple-500 bg-purple-500/10' },
             { name: 'Meetings This Week', val: allMeetings.length, icon: Clock, color: 'text-green-500 bg-green-500/10' },
             { name: 'Open Support Tickets', val: allTickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length, icon: ShieldAlert, color: 'text-red-500 bg-red-500/10' },
@@ -141,51 +199,235 @@ export const AdminPanel: React.FC = () => {
       )}
 
       {/* ====================================================
-          SUB-TAB: USERS DIRECTORY
+          SUB-TAB: COMPANY BROADCASTS MANAGEMENT
           ==================================================== */}
-      {activeSubTab === 'users' && (
-        <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
-            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">Active Staff Profiles Directory</h3>
+      {activeSubTab === 'broadcasts' && (
+        <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow overflow-hidden space-y-4 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center">
+                <Megaphone size={14} className="mr-2 text-nexora-blue" />
+                Company Broadcasts Oversight ({allBroadcasts.length})
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Every broadcast is delivered to 100% of staff ({allUsers.length} employees) via in-app alerts and email.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsBroadcastModalOpen(true)}
+              className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <PlusCircle size={14} />
+              <span>Compose Broadcast to All</span>
+            </button>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/15 text-slate-450 uppercase font-bold">
-                  <th className="p-4">Name / Avatar</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Designation</th>
-                  <th className="p-4">System Role</th>
+                  <th className="p-3">Title & Category</th>
+                  <th className="p-3">Sender</th>
+                  <th className="p-3">Priority</th>
+                  <th className="p-3">Read / Acknowledged</th>
+                  <th className="p-3">Sent At</th>
+                  <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-                {allUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10">
-                    <td className="p-4 flex items-center space-x-3">
-                      <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 object-cover" />
-                      <strong className="text-slate-900 dark:text-white">{user.name}</strong>
-                    </td>
-                    <td className="p-4 text-slate-500 dark:text-slate-400 font-mono">{user.email}</td>
-                    <td className="p-4">{user.designation || 'Specialist Associate'}</td>
-                    <td className="p-4">
-                      {user.email === currentUser.email ? (
-                        <span className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase">
-                          {user.role} (You)
+                {allBroadcasts.map(msg => {
+                  const acks = (msg.acknowledgments || []).length;
+                  return (
+                    <tr key={msg.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10">
+                      <td className="p-3">
+                        <div className="flex items-center space-x-2">
+                          {msg.pinned && <Pin size={12} className="text-amber-500 fill-amber-500/20" />}
+                          <strong className="text-slate-900 dark:text-white line-clamp-1">{msg.title}</strong>
+                        </div>
+                        <span className="text-[10px] text-slate-400">{msg.category}</span>
+                      </td>
+                      <td className="p-3 font-semibold text-slate-700 dark:text-slate-300">
+                        {msg.senderName}
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                          msg.priority === 'URGENT'
+                            ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                            : msg.priority === 'HIGH'
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                        }`}>
+                          {msg.priority}
                         </span>
-                      ) : (
-                        <select
-                          value={user.role}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value as User['role'])}
-                          className="px-2.5 py-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-slate-700 font-semibold"
+                      </td>
+                      <td className="p-3">
+                        <span className="text-green-600 dark:text-green-400 font-bold">{acks}</span> / {allUsers.length} staff
+                      </td>
+                      <td className="p-3 font-mono text-[10px] text-slate-400">
+                        {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => handleDeleteBroadcast(msg.id, msg.title)}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                          title="Delete broadcast"
                         >
-                          <option value="ADMIN">ADMIN</option>
-                          <option value="EMPLOYEE">EMPLOYEE</option>
-                        </select>
-                      )}
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================
+          SUB-TAB: USERS MANAGEMENT & DIRECTORY
+          ==================================================== */}
+      {activeSubTab === 'users' && (
+        <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow overflow-hidden space-y-4 p-5">
+          
+          {deleteSuccessBanner && (
+            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded-xl flex items-center justify-between animate-fade-in">
+              <div className="flex items-center space-x-2">
+                <Check size={16} className="text-emerald-500 shrink-0" />
+                <span>{deleteSuccessBanner}</span>
+              </div>
+              <button onClick={() => setDeleteSuccessBanner(null)} className="text-emerald-700 dark:text-emerald-400 hover:opacity-75">
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Header & Controls */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center">
+                <Users size={14} className="mr-2 text-nexora-blue" />
+                Staff Accounts & Access Management ({allUsers.length})
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {adminCount} Administrator{adminCount > 1 ? 's' : ''} • {empCount} Employee{empCount > 1 ? 's' : ''} • Manage roles or permanently remove accounts.
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2.5">
+              {/* Search bar */}
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                  <Search size={13} />
+                </span>
+                <input
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  placeholder="Search staff..."
+                  className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-nexora-blue"
+                />
+                {userSearchQuery && (
+                  <button
+                    onClick={() => setUserSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* Register New User button */}
+              <button
+                onClick={() => setCurrentTab('register')}
+                className="px-3.5 py-1.5 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+              >
+                <UserPlus size={13} />
+                <span>Register Employee</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Users Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/15 text-slate-450 uppercase font-bold">
+                  <th className="p-3">Staff Member</th>
+                  <th className="p-3">Email Address</th>
+                  <th className="p-3">Designation / Org</th>
+                  <th className="p-3">System Role</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-slate-400">
+                      No employees found matching "{userSearchQuery}".
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredUsers.map(user => {
+                    const isSelf = user.email.toLowerCase() === currentUser.email.toLowerCase();
+                    return (
+                      <tr key={user.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10 transition-colors">
+                        <td className="p-3 flex items-center space-x-3">
+                          <img 
+                            src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} 
+                            alt={user.name} 
+                            className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 object-cover shrink-0" 
+                          />
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                              <span>{user.name}</span>
+                              {isSelf && (
+                                <span className="text-[9px] bg-nexora-blue/15 text-nexora-blue dark:text-nexora-electric px-1.5 py-0.2 rounded font-bold">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400">{user.organization || 'Nexora Technologies'}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 text-slate-600 dark:text-slate-350 font-mono text-[11px]">{user.email}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300">{user.designation || 'Specialist Associate'}</td>
+                        <td className="p-3">
+                          {isSelf ? (
+                            <span className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-350 font-bold uppercase text-[10px]">
+                              {user.role}
+                            </span>
+                          ) : (
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleRoleChange(user.id, e.target.value as User['role'])}
+                              className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-slate-700 font-semibold text-[11px] cursor-pointer focus:outline-none focus:ring-1 focus:ring-nexora-blue"
+                            >
+                              <option value="ADMIN">ADMIN</option>
+                              <option value="EMPLOYEE">EMPLOYEE</option>
+                            </select>
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          {isSelf ? (
+                            <span className="text-[10px] text-slate-400 font-medium italic">
+                              Protected
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setUserToDelete(user)}
+                              className="inline-flex items-center space-x-1 px-2.5 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/15 border border-red-200 dark:border-red-500/20 rounded-lg text-[10px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              title={`Remove ${user.name} from company`}
+                            >
+                              <UserMinus size={12} />
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -421,6 +663,68 @@ export const AdminPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* In-App Delete User Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-scale-up">
+            <div className="flex items-center space-x-3 text-red-600 dark:text-red-400">
+              <div className="p-3 bg-red-100 dark:bg-red-500/15 rounded-xl">
+                <UserMinus size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Remove Employee Account
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Permanent removal from company workspace
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center space-x-3">
+              <img 
+                src={userToDelete.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'} 
+                alt={userToDelete.name} 
+                className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover shrink-0" 
+              />
+              <div className="truncate">
+                <div className="font-bold text-xs text-slate-900 dark:text-white truncate">{userToDelete.name}</div>
+                <div className="text-[11px] text-slate-500 font-mono truncate">{userToDelete.email}</div>
+                <div className="text-[10px] text-slate-400 truncate">{userToDelete.designation || 'Specialist Associate'} • {userToDelete.role}</div>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Are you sure you want to permanently remove <strong className="text-slate-900 dark:text-white">{userToDelete.name}</strong> from the company portal? Their access, authorizations, and assigned tasks will be revoked immediately.
+            </p>
+
+            <div className="flex items-center justify-end space-x-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setUserToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteUser}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center space-x-1.5"
+              >
+                <Trash2 size={13} />
+                <span>Confirm & Remove User</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Modal for Admin */}
+      <BroadcastModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+      />
 
     </div>
   );
