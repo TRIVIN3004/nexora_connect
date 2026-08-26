@@ -114,7 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* ====================================================
           SIDEBAR (DESKTOP / TABLET)
           ==================================================== */}
-      <aside className={`fixed md:sticky top-0 left-0 z-40 w-64 h-screen bg-[#06152F] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 premium-shadow md:translate-x-0 ${
+      <aside className={`fixed md:sticky top-0 left-0 z-40 w-64 h-screen bg-white dark:bg-[#06152F] text-slate-800 dark:text-white flex flex-col justify-between border-r border-slate-200 dark:border-slate-800 transition-colors duration-300 premium-shadow md:translate-x-0 ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:block'
       }`}>
         <div className="flex flex-col flex-1 overflow-y-auto px-4 py-6">
@@ -124,20 +124,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <img 
                 src="/logo.jpg" 
                 alt="Nexora Connect Logo" 
-                className="w-10 h-10 object-contain rounded-xl shadow-md border border-slate-800" 
+                className="w-10 h-10 object-contain rounded-xl shadow-md border border-slate-200 dark:border-slate-800 bg-white p-0.5" 
               />
               <div>
-                <span className="font-heading font-extrabold text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">
+                <span className="font-heading font-extrabold text-lg tracking-wider text-slate-900 dark:text-white">
                   NEXORA
                 </span>
-                <span className="font-heading font-semibold text-xs block text-nexora-electric tracking-widest mt-[-2px]">
+                <span className="font-heading font-semibold text-xs block text-nexora-blue dark:text-nexora-electric tracking-widest mt-[-2px]">
                   CONNECT
                 </span>
               </div>
             </div>
             {/* Close Button on Mobile */}
             <button 
-              className="md:hidden text-slate-400 hover:text-white"
+              className="md:hidden text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
               onClick={() => setMobileMenuOpen(false)}
             >
               <X size={20} />
@@ -158,13 +158,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     // Reset global search query on tab change
                     setSearchQuery('');
                   }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
                     isActive
                       ? 'bg-gradient-to-r from-nexora-blue to-nexora-blue/80 text-white shadow-md'
-                      : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-100'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
-                  <IconComponent size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
+                  <IconComponent size={18} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-100'} />
                   <span>{item.name}</span>
                 </button>
               );
@@ -173,17 +173,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* User Card inside Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/20">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 min-w-0">
               <img
                 src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}
                 alt={currentUser.name}
-                className="w-10 h-10 rounded-full border border-slate-700 object-cover"
+                className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate text-slate-200">{currentUser.name}</p>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-nexora-blue/20 text-nexora-electric border border-nexora-blue/30 font-medium">
+                <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200">{currentUser.name}</p>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-nexora-blue/10 dark:bg-nexora-blue/20 text-nexora-blue dark:text-nexora-electric border border-nexora-blue/20 dark:border-nexora-blue/30 font-medium">
                   {currentUser.role}
                 </span>
               </div>
@@ -192,7 +192,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Sign Out Button */}
             <button
               onClick={() => setCurrentUser(null)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Sign Out"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
@@ -390,7 +390,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* ====================================================
           BOTTOM TAB NAVIGATION (MOBILE PORTRAIT ONLY)
           ==================================================== */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#06152F] border-t border-slate-800 px-4 py-2 flex justify-around items-center z-50 premium-shadow">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#06152F] border-t border-slate-200 dark:border-slate-800 px-4 py-2 flex justify-around items-center z-50 premium-shadow">
         {navigationItems.slice(0, 5).map(item => {
           const IconComponent = item.icon;
           const isActive = currentTab === item.id;
@@ -401,8 +401,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 setCurrentTab(item.id);
                 setSearchQuery('');
               }}
-              className={`flex flex-col items-center justify-center p-1.5 transition-colors duration-150 ${
-                isActive ? 'text-nexora-electric' : 'text-slate-400'
+              className={`flex flex-col items-center justify-center p-1.5 transition-colors duration-150 cursor-pointer ${
+                isActive ? 'text-nexora-blue dark:text-nexora-electric' : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               <IconComponent size={20} />
@@ -416,8 +416,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             setCurrentTab('settings');
             setSearchQuery('');
           }}
-          className={`flex flex-col items-center justify-center p-1.5 ${
-            currentTab === 'settings' || currentTab === 'admin' ? 'text-nexora-electric' : 'text-slate-400'
+          className={`flex flex-col items-center justify-center p-1.5 cursor-pointer ${
+            currentTab === 'settings' || currentTab === 'admin' ? 'text-nexora-blue dark:text-nexora-electric' : 'text-slate-500 dark:text-slate-400'
           }`}
         >
           <Settings size={20} />

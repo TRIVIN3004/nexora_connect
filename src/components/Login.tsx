@@ -17,7 +17,7 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
-  const { db, setCurrentUser, setCurrentTab, triggerRefresh } = useApp();
+  const { db, setCurrentUser, setCurrentTab, triggerRefresh, setTheme } = useApp();
 
   // Form states
   const [email, setEmail] = useState('');
@@ -65,8 +65,13 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
       setSuccessMsg(true);
       setIsSubmitting(false);
 
-      // Sign user in and redirect to dashboard
+      // Sign user in and redirect to dashboard in light theme
       setTimeout(() => {
+        setTheme('light');
+        localStorage.setItem('nexora_theme', 'light');
+        const root = window.document.documentElement;
+        root.classList.remove('dark');
+        root.style.backgroundColor = '#F8FAFC';
         setCurrentUser(user);
         setCurrentTab('dashboard');
         triggerRefresh();

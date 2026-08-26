@@ -43,12 +43,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('nexora_theme');
-    return (saved as 'light' | 'dark') || 'light'; // Default theme is light
+    if (saved === 'dark' && localStorage.getItem('nexora_theme_explicit_choice') === 'dark') {
+      return 'dark';
+    }
+    return 'light'; // Default theme is light
   });
   const [searchQuery, setSearchQuery] = useState('');
 
   const triggerRefresh = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleSetTheme = (newTheme: 'light' | 'dark') => {
+    localStorage.setItem('nexora_theme_explicit_choice', newTheme);
+    localStorage.setItem('nexora_theme', newTheme);
+    setTheme(newTheme);
   };
 
   const setCurrentUser = (user: User | null) => {
@@ -59,6 +68,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       localStorage.removeItem('nexora_current_user_email');
       localStorage.setItem('nexora_theme', 'light');
+      localStorage.removeItem('nexora_theme_explicit_choice');
       setTheme('light');
       const root = window.document.documentElement;
       root.classList.remove('dark');
@@ -70,25 +80,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Sync theme with body class for dark mode styling
   useEffect(() => {
     const root = window.document.documentElement;
-    const isGuest = !currentUser || currentUser.email === guestUser.email;
-    const activeTheme = isGuest ? 'light' : theme;
-
-    if (activeTheme === 'dark') {
+    if (theme === 'dark') {
       root.classList.add('dark');
       root.style.backgroundColor = '#0A1220'; // Nexora Dark background color
     } else {
       root.classList.remove('dark');
       root.style.backgroundColor = '#F8FAFC'; // Light background slate-50
     }
-    localStorage.setItem('nexora_theme', activeTheme);
-  }, [theme, currentUser]);
-
-  // Force theme to light for guest / unauthenticated users
-  useEffect(() => {
-    if ((!currentUser || currentUser.email === guestUser.email) && theme !== 'light') {
-      setTheme('light');
-    }
-  }, [currentUser, theme]);
+    localStorage.setItem('nexora_theme', theme);
+  }, [theme]);
 
   // Periodic meeting reminder trigger simulator
   // Since we are running in the browser, we can simulate check-ins
@@ -140,7 +140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentTab,
       setCurrentTab,
       theme,
-      setTheme,
+      setTheme: handleSetTheme,
       refreshKey,
       triggerRefresh,
       searchQuery,
