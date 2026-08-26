@@ -109,7 +109,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   });
 
   return (
-    <div className="min-height-screen flex flex-col md:flex-row bg-slate-50 dark:bg-dark-bg text-slate-800 dark:text-slate-200 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-dark-bg text-slate-800 dark:text-slate-200 transition-colors duration-300">
       
       {/* ====================================================
           SIDEBAR (DESKTOP / TABLET)
