@@ -41,17 +41,17 @@ const AppContent: React.FC = () => {
   // Block dashboard and show login/register view if guest
   if (!currentUser || currentUser.email === 'guest@nexoratechs.com') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-dark-bg text-slate-800 dark:text-slate-200 transition-colors duration-300 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-100 text-slate-800 flex items-center justify-center p-4 selection:bg-nexora-blue/20">
         {authView === 'login' ? (
           <Login onToggleView={() => setAuthView('register')} />
         ) : (
           <div className="w-full max-w-xl">
             <RegisterProfile />
-            <div className="mt-4 text-center text-xs text-slate-500 dark:text-slate-455">
+            <div className="mt-4 text-center text-xs text-slate-500">
               Already have an account?{' '}
               <button
                 onClick={() => setAuthView('login')}
-                className="text-nexora-blue dark:text-nexora-electric hover:underline font-bold cursor-pointer"
+                className="text-nexora-blue hover:underline font-bold cursor-pointer"
               >
                 Sign In
               </button>

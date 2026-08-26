@@ -58,6 +58,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('nexora_current_user_email', user.email);
     } else {
       localStorage.removeItem('nexora_current_user_email');
+      localStorage.setItem('nexora_theme', 'light');
+      setTheme('light');
+      const root = window.document.documentElement;
+      root.classList.remove('dark');
+      root.style.backgroundColor = '#F8FAFC';
     }
     triggerRefresh();
   };
@@ -65,15 +70,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Sync theme with body class for dark mode styling
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === 'dark') {
+    const isGuest = !currentUser || currentUser.email === guestUser.email;
+    const activeTheme = isGuest ? 'light' : theme;
+
+    if (activeTheme === 'dark') {
       root.classList.add('dark');
       root.style.backgroundColor = '#0A1220'; // Nexora Dark background color
     } else {
       root.classList.remove('dark');
       root.style.backgroundColor = '#F8FAFC'; // Light background slate-50
     }
-    localStorage.setItem('nexora_theme', theme);
-  }, [theme]);
+    localStorage.setItem('nexora_theme', activeTheme);
+  }, [theme, currentUser]);
+
+  // Force theme to light for guest / unauthenticated users
+  useEffect(() => {
+    if ((!currentUser || currentUser.email === guestUser.email) && theme !== 'light') {
+      setTheme('light');
+    }
+  }, [currentUser, theme]);
 
   // Periodic meeting reminder trigger simulator
   // Since we are running in the browser, we can simulate check-ins

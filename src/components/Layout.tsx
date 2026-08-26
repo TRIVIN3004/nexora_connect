@@ -120,10 +120,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex flex-col flex-1 overflow-y-auto px-4 py-6">
           {/* Logo Brand */}
           <div className="flex items-center justify-between mb-8 px-2">
-            <div className="flex items-center space-x-2.5">
-              <div className="bg-gradient-to-r from-nexora-blue to-nexora-electric text-white p-2 rounded-lg font-bold text-lg shadow-md animate-pulse-subtle">
-                N
-              </div>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/logo.jpg" 
+                alt="Nexora Connect Logo" 
+                className="w-10 h-10 object-contain rounded-xl shadow-md border border-slate-800" 
+              />
               <div>
                 <span className="font-heading font-extrabold text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">
                   NEXORA
