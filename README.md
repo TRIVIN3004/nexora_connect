@@ -52,3 +52,5 @@ Port 25 (Deprecated / Blocked):
 Security: Unencrypted and insecure.
 Usage: Mostly blocked by internet service providers (ISPs) and cloud hosting networks (like AWS or Azure) to prevent spam. You should avoid using Port 25.
 # nexora_connect
+
+resend api

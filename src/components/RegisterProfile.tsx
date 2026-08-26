@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  UserPlus, 
   Mail, 
   Lock, 
   User as UserIcon, 
