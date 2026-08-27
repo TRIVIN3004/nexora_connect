@@ -166,10 +166,14 @@ export class EmailService {
 
     // Real email dispatch if Resend API Key is configured
     const apiKey = (import.meta as any).env?.VITE_RESEND_API_KEY || localStorage.getItem('nexora_email_api_key');
-    const fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from') || 'connect@mail.nexoratechs.xyz';
+    let fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from') || 'connect@mail.nexoratechs.xyz';
+    
+    // Resend requires verified sending domains (e.g. mail.nexoratechs.xyz). If user entered a @gmail.com or invalid fromAddress, fallback to verified domain
+    if (!fromAddress || fromAddress.endsWith('@gmail.com') || fromAddress.endsWith('@yahoo.com') || fromAddress.endsWith('@outlook.com') || fromAddress.endsWith('@hotmail.com')) {
+      fromAddress = 'connect@mail.nexoratechs.xyz';
+    }
 
     if (apiKey) {
-      // If still using default onboarding sandbox, limit to verified account; if custom domain is configured, send directly to recipient
       const recipient = fromAddress === 'onboarding@resend.dev' ? 'contactnexoratechs@gmail.com' : to;
 
       fetch('https://api.resend.com/emails', {
@@ -181,6 +185,7 @@ export class EmailService {
         body: JSON.stringify({
           from: `Nexora Connect <${fromAddress}>`,
           to: [recipient],
+          reply_to: 'contactnexoratechs@gmail.com',
           subject: subject,
           html: fullHtml
         })
