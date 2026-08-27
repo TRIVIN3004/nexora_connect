@@ -11,7 +11,8 @@ import {
   User, 
   AlertCircle,
   X,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import type { Recording } from '../services/database';
 import { AIService } from '../services/ai';
@@ -22,6 +23,8 @@ export const RecordingsLibrary: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedTag, setSelectedTag] = useState('ALL');
   const [activeRecording, setActiveRecording] = useState<Recording | null>(null);
+  const [recordingToDelete, setRecordingToDelete] = useState<Recording | null>(null);
+  const [deleteSuccessMsg, setDeleteSuccessMsg] = useState<string | null>(null);
 
   // AI Meeting summary states
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
@@ -97,8 +100,44 @@ export const RecordingsLibrary: React.FC = () => {
     }
   };
 
+  const handleConfirmDelete = () => {
+    if (!recordingToDelete) return;
+    const title = recordingToDelete.title;
+    db.deleteRecording(recordingToDelete.id, currentUser.email, currentUser.name);
+
+    if (activeRecording?.id === recordingToDelete.id) {
+      setActiveRecording(null);
+    }
+
+    setRecordingToDelete(null);
+    setDeleteSuccessMsg(`Recording "${title}" has been deleted.`);
+    triggerRefresh();
+
+    setTimeout(() => {
+      setDeleteSuccessMsg(null);
+    }, 4000);
+  };
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto animate-slide-up">
+
+      {/* Delete Success Alert Banner */}
+      {deleteSuccessMsg && (
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-xl flex items-center justify-between animate-slide-up">
+          <div className="flex items-center space-x-2">
+            <div className="p-1 bg-emerald-500 text-white rounded-full">
+              <Sparkles size={13} />
+            </div>
+            <span>{deleteSuccessMsg}</span>
+          </div>
+          <button
+            onClick={() => setDeleteSuccessMsg(null)}
+            className="text-emerald-600 dark:text-emerald-400 hover:opacity-75 cursor-pointer"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
       
       {/* ====================================================
           SUBHEADER & ACTIONS
@@ -233,22 +272,36 @@ export const RecordingsLibrary: React.FC = () => {
                     Organizer: {rec.organizer}
                   </span>
 
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleWatchRecording(rec)}
-                      className="px-3 py-1.5 bg-nexora-blue/10 hover:bg-nexora-blue text-nexora-blue hover:text-white rounded-lg text-xs font-semibold transition-colors duration-155"
+                      className="px-3 py-1.5 bg-nexora-blue/10 hover:bg-nexora-blue text-nexora-blue hover:text-white rounded-lg text-xs font-semibold transition-colors duration-155 cursor-pointer"
                     >
                       Watch
                     </button>
                     
-                    {/* Simulated Download button (Only permitted roles can download or simple feedback alert) */}
+                    {/* Simulated Download button */}
                     <button
                       onClick={() => alert(`Initiating secure corporate download for: ${rec.title}`)}
-                      className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg"
+                      className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg cursor-pointer transition-colors"
                       title="Download Secure Copy"
                     >
                       <Download size={14} />
                     </button>
+
+                    {/* Delete Recording Button (Admin or Organizer) */}
+                    {currentUser.role === 'ADMIN' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRecordingToDelete(rec);
+                        }}
+                        className="p-1.5 border border-red-200 dark:border-red-500/20 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                        title="Delete this recording"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -379,10 +432,20 @@ export const RecordingsLibrary: React.FC = () => {
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex space-x-2">
                 <button
                   onClick={() => alert(`Initiating secure download...`)}
-                  className="flex-1 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center"
+                  className="flex-1 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors"
                 >
                   <Download size={14} className="mr-1.5" /> Download (.mp4)
                 </button>
+
+                {currentUser.role === 'ADMIN' && (
+                  <button
+                    onClick={() => setRecordingToDelete(activeRecording)}
+                    className="py-2 px-3 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                    title="Delete this recording"
+                  >
+                    <Trash2 size={14} className="mr-1.5" /> Delete
+                  </button>
+                )}
               </div>
 
             </div>
@@ -553,6 +616,49 @@ export const RecordingsLibrary: React.FC = () => {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================
+          DELETE RECORDING CONFIRMATION MODAL
+          ==================================================== */}
+      {recordingToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-scale-in">
+            <div className="flex items-center space-x-3 text-red-600 dark:text-red-400">
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="font-heading font-extrabold text-base text-slate-900 dark:text-white">
+                  Delete Recording
+                </h3>
+                <p className="text-xs text-slate-400">This action is permanent and cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Are you sure you want to permanently remove <strong className="text-slate-900 dark:text-white">"{recordingToDelete.title}"</strong> ({recordingToDelete.duration}) from the recording library and cloud storage?
+            </p>
+
+            <div className="flex justify-end space-x-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setRecordingToDelete(null)}
+                className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-500/20 active:scale-95 transition-all cursor-pointer flex items-center space-x-1.5"
+              >
+                <Trash2 size={13} />
+                <span>Confirm &amp; Delete Recording</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
