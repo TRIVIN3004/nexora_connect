@@ -17,14 +17,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { from, to, subject, html, reply_to, apiKey } = req.body;
-
     const resendKey = apiKey || process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
     if (!resendKey) {
-      return res.status(400).json({ error: 'Resend API Key is missing in environment variables.' });
+      return res.status(400).json({ error: 'Resend API Key is missing.' });
     }
 
-    const fromAddress = from || process.env.VITE_RESEND_FROM_EMAIL || 'Nexora Connect <connect@mail.nexoratechs.xyz>';
+    let fromAddress = from || process.env.VITE_RESEND_FROM_EMAIL || 'connect@mail.nexoratechs.xyz';
+    if (!fromAddress || fromAddress.includes('onboarding@resend.dev') || fromAddress.includes('@gmail.com') || fromAddress.includes('@yahoo.com')) {
+      fromAddress = 'connect@mail.nexoratechs.xyz';
+    }
+    const formattedFrom = fromAddress.includes('<') ? fromAddress : `Nexora Connect <${fromAddress}>`;
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',

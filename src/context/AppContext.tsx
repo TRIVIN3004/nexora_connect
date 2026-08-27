@@ -118,15 +118,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => clearInterval(interval);
   }, []);
 
-  // Pre-load default Resend configuration keys
+  // Pre-load verified Resend configuration keys
   useEffect(() => {
-    if (!localStorage.getItem('nexora_email_provider')) {
-      localStorage.setItem('nexora_email_provider', 'Resend');
+    localStorage.setItem('nexora_email_provider', 'Resend');
+    const existingKey = localStorage.getItem('nexora_email_api_key');
+    if (!existingKey || existingKey.startsWith('re_placeholder') || existingKey.length < 15) {
+      const envKey = (import.meta.env.VITE_RESEND_API_KEY as string);
+      if (envKey) localStorage.setItem('nexora_email_api_key', envKey);
     }
-    if (!localStorage.getItem('nexora_email_api_key')) {
-      localStorage.setItem('nexora_email_api_key', (import.meta.env.VITE_RESEND_API_KEY as string) || 're_placeholder_key_for_development');
-    }
-    if (!localStorage.getItem('nexora_email_from')) {
+    const existingFrom = localStorage.getItem('nexora_email_from');
+    if (!existingFrom || existingFrom === 'onboarding@resend.dev' || existingFrom.includes('@gmail.com') || existingFrom.includes('@yahoo.com') || existingFrom.includes('@outlook.com')) {
       localStorage.setItem('nexora_email_from', (import.meta.env.VITE_RESEND_FROM_EMAIL as string) || 'connect@mail.nexoratechs.xyz');
     }
   }, []);

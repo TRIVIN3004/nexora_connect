@@ -30,7 +30,11 @@ export default defineConfig(({ mode }) => {
                 try {
                   const body = JSON.parse(bodyStr || '{}')
                   const apiKey = body.apiKey || env.VITE_RESEND_API_KEY || process.env.VITE_RESEND_API_KEY
-                  const from = body.from || env.VITE_RESEND_FROM_EMAIL || 'Nexora Connect <connect@mail.nexoratechs.xyz>'
+                  let from = body.from || env.VITE_RESEND_FROM_EMAIL || 'connect@mail.nexoratechs.xyz'
+                  if (!from || from.includes('onboarding@resend.dev') || from.includes('@gmail.com') || from.includes('@yahoo.com')) {
+                    from = 'connect@mail.nexoratechs.xyz'
+                  }
+                  const formattedFrom = from.includes('<') ? from : `Nexora Connect <${from}>`
                   
                   const response = await fetch('https://api.resend.com/emails', {
                     method: 'POST',
@@ -39,7 +43,7 @@ export default defineConfig(({ mode }) => {
                       'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                      from: from,
+                      from: formattedFrom,
                       to: Array.isArray(body.to) ? body.to : [body.to],
                       reply_to: body.reply_to || 'contactnexoratechs@gmail.com',
                       subject: body.subject,

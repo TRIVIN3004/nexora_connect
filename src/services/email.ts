@@ -164,26 +164,25 @@ export class EmailService {
     saveSentEmail(mockEmail);
     console.log(`[SMTP SIMULATOR] Email logged to sandbox for ${to}. Subject: ${subject}.`);
 
-    // Real email dispatch if Resend API Key is configured
+    // Real email dispatch with verified Resend configuration
     const apiKey = (import.meta as any).env?.VITE_RESEND_API_KEY || localStorage.getItem('nexora_email_api_key');
-    let fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from') || 'connect@mail.nexoratechs.xyz';
-    
-    // Resend requires verified sending domains (e.g. mail.nexoratechs.xyz). If user entered a @gmail.com or invalid fromAddress, fallback to verified domain
-    if (!fromAddress || fromAddress.endsWith('@gmail.com') || fromAddress.endsWith('@yahoo.com') || fromAddress.endsWith('@outlook.com') || fromAddress.endsWith('@hotmail.com')) {
+
+    let fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from');
+    if (!fromAddress || fromAddress === 'onboarding@resend.dev' || fromAddress.includes('@gmail.com') || fromAddress.includes('@yahoo.com') || fromAddress.includes('@outlook.com') || fromAddress.includes('@hotmail.com')) {
       fromAddress = 'connect@mail.nexoratechs.xyz';
     }
 
-    if (apiKey) {
-      const recipient = fromAddress === 'onboarding@resend.dev' ? 'contactnexoratechs@gmail.com' : to;
+    // Always send directly to target recipient
+    const recipient = to.trim();
 
-      const emailPayload = {
-        from: `Nexora Connect <${fromAddress}>`,
-        to: [recipient],
-        reply_to: 'contactnexoratechs@gmail.com',
-        subject: subject,
-        html: fullHtml,
-        apiKey: apiKey
-      };
+    const emailPayload = {
+      from: `Nexora Connect <${fromAddress}>`,
+      to: [recipient],
+      reply_to: 'contactnexoratechs@gmail.com',
+      subject: subject,
+      html: fullHtml,
+      apiKey: apiKey
+    };
 
       // 1. Try local / Vercel serverless proxy endpoint to avoid browser CORS
       fetch('/api/send-email', {
@@ -223,7 +222,6 @@ export class EmailService {
       .catch(err => {
         console.error('[SMTP RESEND API] Dispatch failed:', err);
       });
-    }
   }
 
   static getSentEmailsList(): SentEmail[] {
