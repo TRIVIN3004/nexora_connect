@@ -431,6 +431,36 @@ const defaultUsers: User[] = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'sanjayvijay20051512@gmail.com',
+    email: 'sanjayvijay20051512@gmail.com',
+    name: 'Sanjay c',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'aaryanjain950@gmail.com',
+    email: 'aaryanjain950@gmail.com',
+    name: 'Aaryan',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'mgokulashri944@gmail.com',
+    email: 'mgokulashri944@gmail.com',
+    name: 'M Gokulashri',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
@@ -995,8 +1025,8 @@ export class NexoraDatabase {
   }
 
   initSupabase(): void {
-    let url = (import.meta.env.VITE_SUPABASE_URL as string) || localStorage.getItem('nexora_supabase_url');
-    this.supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || localStorage.getItem('nexora_supabase_anon_key');
+    let url = (typeof import.meta !== 'undefined' && import.meta.env ? (import.meta.env.VITE_SUPABASE_URL as string) : '') || (typeof localStorage !== 'undefined' ? localStorage.getItem('nexora_supabase_url') : null);
+    this.supabaseKey = (typeof import.meta !== 'undefined' && import.meta.env ? (import.meta.env.VITE_SUPABASE_ANON_KEY as string) : '') || (typeof localStorage !== 'undefined' ? localStorage.getItem('nexora_supabase_anon_key') : null);
     
     if (url) {
       // Normalize URL (strip trailing slashes, /rest/v1, etc.)
@@ -1069,8 +1099,15 @@ export class NexoraDatabase {
         });
         setStorageItem('nexora_users', uniqueSynced);
       }
-      if (dbWebinars) setStorageItem('nexora_webinars', dbWebinars.map(mapWebinarToClient));
-      if (dbRegistrations) setStorageItem('nexora_webinar_registrations', dbRegistrations.map(mapRegistrationToClient));
+      if (dbWebinars && dbWebinars.length > 0) setStorageItem('nexora_webinars', dbWebinars.map(mapWebinarToClient));
+      if (dbRegistrations && dbRegistrations.length > 0) {
+        const remoteRegs = dbRegistrations.map(mapRegistrationToClient);
+        const localRegs = getStorageItem<WebinarRegistration[]>('nexora_webinar_registrations', []);
+        const regMap = new Map<string, WebinarRegistration>();
+        localRegs.forEach(r => regMap.set(`${r.webinarId}_${r.userId.trim().toLowerCase()}`, r));
+        remoteRegs.forEach(r => regMap.set(`${r.webinarId}_${r.userId.trim().toLowerCase()}`, r));
+        setStorageItem('nexora_webinar_registrations', Array.from(regMap.values()));
+      }
       if (dbMeetings) setStorageItem('nexora_meetings', dbMeetings.map(mapMeetingToClient));
       if (dbRecordings) setStorageItem('nexora_recordings', dbRecordings.map(mapRecordingToClient));
       if (dbFeedbacks) setStorageItem('nexora_feedbacks', dbFeedbacks.map(mapFeedbackToClient));
@@ -1227,14 +1264,38 @@ export class NexoraDatabase {
     }
   }
 
+  deleteWebinar(webinarId: string, actingUserEmail: string, actingUserName: string): void {
+    const webinars = this.getWebinars().filter(w => w.id !== webinarId);
+    setStorageItem('nexora_webinars', webinars);
+    const regs = this.getWebinarRegistrations().filter(r => r.webinarId !== webinarId);
+    setStorageItem('nexora_webinar_registrations', regs);
+    this.createAuditLog(actingUserEmail, actingUserName, 'DELETE_WEBINAR', 'Webinar', webinarId);
+    if (this.supabase) {
+      this.supabase.from('webinars').delete().eq('id', webinarId).then(({ error }) => {
+        if (error) console.error('[SUPABASE] deleteWebinar error:', error);
+      });
+      this.supabase.from('webinar_registrations').delete().eq('webinar_id', webinarId).then(({ error }) => {
+        if (error) console.error('[SUPABASE] deleteWebinar registrations error:', error);
+      });
+    }
+  }
+
   // Registrations
   getWebinarRegistrations(): WebinarRegistration[] {
     return getStorageItem<WebinarRegistration[]>('nexora_webinar_registrations', defaultRegistrations);
   }
 
   registerForWebinar(webinarId: string, userId: string): WebinarRegistration {
+    const normUser = (userId || '').trim().toLowerCase();
+    const existing = this.getWebinarRegistrations().find(
+      r => r.webinarId === webinarId && (r.userId || '').trim().toLowerCase() === normUser
+    );
+    if (existing) {
+      return existing;
+    }
+
     const id = `reg-${Date.now()}`;
-    const newReg = { id, webinarId, userId, registeredAt: new Date().toISOString() };
+    const newReg: WebinarRegistration = { id, webinarId, userId: normUser, registeredAt: new Date().toISOString() };
     const regs = [...this.getWebinarRegistrations(), newReg];
     setStorageItem('nexora_webinar_registrations', regs);
 
@@ -1257,10 +1318,13 @@ export class NexoraDatabase {
   }
 
   unregisterForWebinar(webinarId: string, userId: string): void {
-    const regs = this.getWebinarRegistrations().filter(r => !(r.webinarId === webinarId && r.userId === userId));
+    const normUser = (userId || '').trim().toLowerCase();
+    const regs = this.getWebinarRegistrations().filter(
+      r => !(r.webinarId === webinarId && (r.userId || '').trim().toLowerCase() === normUser)
+    );
     setStorageItem('nexora_webinar_registrations', regs);
     if (this.supabase) {
-      this.supabase.from('webinar_registrations').delete().eq('webinar_id', webinarId).eq('user_id', userId).then(({ error }) => {
+      this.supabase.from('webinar_registrations').delete().eq('webinar_id', webinarId).eq('user_id', normUser).then(({ error }) => {
         if (error) console.error('[SUPABASE] unregisterForWebinar error:', error);
       });
     }

@@ -12,12 +12,19 @@ import {
   ExternalLink,
   CalendarCheck,
   AlertCircle,
-  X
+  X,
+  Trash2,
+  Send,
+  Zap,
+  Mail,
+  CheckCircle2,
+  Edit3
 } from 'lucide-react';
 import type { Webinar } from '../services/database';
+import { InstantEmailModal } from './InstantEmailModal';
 
 export const WebinarModule: React.FC = () => {
-  const { db, currentUser, triggerRefresh } = useApp();
+  const { db, dispatcher, currentUser, triggerRefresh } = useApp();
 
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -25,15 +32,24 @@ export const WebinarModule: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null);
 
+  // Deletion & Action states
+  const [webinarToDelete, setWebinarToDelete] = useState<Webinar | null>(null);
+  const [broadcastLinkWebinar, setBroadcastLinkWebinar] = useState<Webinar | null>(null);
+  const [broadcastCustomNote, setBroadcastCustomNote] = useState('');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [instantEmailOpen, setInstantEmailOpen] = useState(false);
+
   // Forms
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [sendLinkToAllOnSchedule, setSendLinkToAllOnSchedule] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     speaker: '',
     speakerDesignation: '',
-    speakerOrganization: '',
+    speakerOrganization: 'Nexora Technologies',
     date: '',
     startTime: '',
     endTime: '',
@@ -52,6 +68,14 @@ export const WebinarModule: React.FC = () => {
 
   const webinars = db.getWebinars();
   const registrations = db.getWebinarRegistrations();
+  const allUsers = db.getUsers();
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
 
   // Apply filters
   const filteredWebinars = webinars.filter(web => {
@@ -81,13 +105,22 @@ export const WebinarModule: React.FC = () => {
   };
 
   const handleRegister = (webinarId: string) => {
-    const isRegistered = registrations.some(r => r.webinarId === webinarId && r.userId === currentUser.email);
+    const userEmail = (currentUser.email || '').trim().toLowerCase();
+    const isRegistered = registrations.some(
+      r => r.webinarId === webinarId && (r.userId || '').trim().toLowerCase() === userEmail
+    );
+
     if (isRegistered) {
-      db.unregisterForWebinar(webinarId, currentUser.email);
+      db.unregisterForWebinar(webinarId, userEmail);
+      showToast('You have unregistered from this webinar.');
     } else {
-      db.registerForWebinar(webinarId, currentUser.email);
+      db.registerForWebinar(webinarId, userEmail);
+      // Dispatch confirmation
+      dispatcher.dispatchWebinarRegistration(currentUser.email, webinarId);
+      showToast('Registration confirmed! Check your in-app notifications and email for details.');
     }
     triggerRefresh();
+
     // Sync current drawer detail
     if (selectedWebinar && selectedWebinar.id === webinarId) {
       const updated = db.getWebinars().find(w => w.id === webinarId);
@@ -95,11 +128,66 @@ export const WebinarModule: React.FC = () => {
     }
   };
 
+  const handleConfirmDelete = () => {
+    if (!webinarToDelete) return;
+    const targetId = webinarToDelete.id;
+    const targetTitle = webinarToDelete.title;
+
+    db.deleteWebinar(targetId, currentUser.email, currentUser.name);
+
+    if (selectedWebinar && selectedWebinar.id === targetId) {
+      setSelectedWebinar(null);
+    }
+    if (createModalOpen && editMode && selectedWebinar?.id === targetId) {
+      setCreateModalOpen(false);
+    }
+
+    setWebinarToDelete(null);
+    triggerRefresh();
+    showToast(`Webinar "${targetTitle}" was deleted successfully.`);
+  };
+
+  const handleBroadcastMeetingLink = () => {
+    if (!broadcastLinkWebinar) return;
+    setIsBroadcasting(true);
+
+    try {
+      dispatcher.dispatchWebinarLinkToAllEmployees(
+        broadcastLinkWebinar.id,
+        currentUser.name,
+        broadcastCustomNote.trim() || undefined
+      );
+
+      // Audit log
+      db.createAuditLog(
+        currentUser.email,
+        currentUser.name,
+        'WEBINAR_LINK_BROADCAST_TO_ALL',
+        'Webinar',
+        broadcastLinkWebinar.id
+      );
+
+      triggerRefresh();
+      setIsBroadcasting(false);
+      const title = broadcastLinkWebinar.title;
+      setBroadcastLinkWebinar(null);
+      setBroadcastCustomNote('');
+      showToast(`Meeting link for "${title}" successfully emailed and notified to ALL ${allUsers.length} employees!`);
+    } catch (e) {
+      console.error('Broadcast webinar link failed:', e);
+      setIsBroadcasting(false);
+      alert('Failed to send broadcast. Please try again.');
+    }
+  };
+
   const handleCreateWebinar = (e: React.FormEvent) => {
     e.preventDefault();
     const tagsArr = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
     
+    let targetWebinarId = '';
+
     if (editMode && selectedWebinar) {
+      targetWebinarId = selectedWebinar.id;
       const updated: Webinar = {
         ...selectedWebinar,
         ...formData,
@@ -109,8 +197,9 @@ export const WebinarModule: React.FC = () => {
       };
       db.updateWebinar(updated, currentUser.email, currentUser.name);
       setSelectedWebinar(updated);
+      showToast(`Webinar "${updated.title}" updated successfully.`);
     } else {
-      db.createWebinar(
+      const created = db.createWebinar(
         {
           ...formData,
           tags: tagsArr,
@@ -120,6 +209,14 @@ export const WebinarModule: React.FC = () => {
         currentUser.email,
         currentUser.name
       );
+      targetWebinarId = created.id;
+      showToast(`Webinar "${created.title}" scheduled successfully.`);
+    }
+
+    // If checkbox to broadcast link to all employees is selected
+    if (sendLinkToAllOnSchedule && targetWebinarId) {
+      dispatcher.dispatchWebinarLinkToAllEmployees(targetWebinarId, currentUser.name);
+      showToast(`Webinar meeting link & invite dispatched to all ${allUsers.length} employees!`);
     }
 
     setCreateModalOpen(false);
@@ -148,6 +245,7 @@ export const WebinarModule: React.FC = () => {
       status: web.status
     });
     setEditMode(true);
+    setSendLinkToAllOnSchedule(false);
     setCreateModalOpen(true);
   };
 
@@ -171,48 +269,77 @@ export const WebinarModule: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 p-4 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 rounded-xl shadow-2xl flex items-center space-x-3 max-w-md animate-slide-in border border-slate-700 dark:border-slate-300">
+          <CheckCircle2 size={20} className="text-green-400 dark:text-green-600 shrink-0" />
+          <p className="text-xs font-semibold flex-1 leading-snug">{toastMessage}</p>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="text-slate-400 hover:text-white dark:hover:text-black"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* ====================================================
           SUB-HEADER BANNER & ACTIONS
           ==================================================== */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold font-heading text-slate-900 dark:text-white">
+          <h1 className="text-xl md:text-2xl font-bold font-heading text-slate-900 dark:text-white flex items-center">
             Nexora Webinars Hub
           </h1>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Discover internal lectures, technical panels, and masterclasses scheduled by mentors.
+            Discover internal masterclasses, technical panels, and live sessions scheduled across Nexora.
           </p>
         </div>
-        {currentUser.role === 'ADMIN' && (
+
+        <div className="flex items-center space-x-2.5">
+          {/* Quick Sudden Instant Email Trigger */}
           <button
-            onClick={() => {
-              setEditMode(false);
-              setFormData({
-                title: '',
-                description: '',
-                speaker: '',
-                speakerDesignation: '',
-                speakerOrganization: 'Nexora Technologies',
-                date: '',
-                startTime: '',
-                endTime: '',
-                duration: 90,
-                platform: 'Google Meet',
-                url: '',
-                thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600',
-                category: 'Programming',
-                tags: '',
-                registrationDeadline: '',
-                maxParticipants: 100,
-                status: 'UPCOMING'
-              });
-              setCreateModalOpen(true);
-            }}
-            className="px-4 py-2.5 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-semibold flex items-center shadow-md active:scale-95 transition-all duration-150"
+            onClick={() => setInstantEmailOpen(true)}
+            className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-xs font-bold flex items-center shadow-sm active:scale-95 transition-all cursor-pointer"
+            title="Send an immediate broadcast email to all employees"
           >
-            <Plus size={16} className="mr-1.5" /> Schedule Webinar
+            <Zap size={14} className="mr-1.5 text-yellow-200 animate-pulse" />
+            <span>Instant Email to All</span>
           </button>
-        )}
+
+          {/* Schedule Webinar Button (Admin) */}
+          {currentUser.role === 'ADMIN' && (
+            <button
+              onClick={() => {
+                setEditMode(false);
+                setSendLinkToAllOnSchedule(true);
+                setFormData({
+                  title: '',
+                  description: '',
+                  speaker: '',
+                  speakerDesignation: '',
+                  speakerOrganization: 'Nexora Technologies',
+                  date: '',
+                  startTime: '',
+                  endTime: '',
+                  duration: 90,
+                  platform: 'Google Meet',
+                  url: '',
+                  thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600',
+                  category: 'Programming',
+                  tags: '',
+                  registrationDeadline: '',
+                  maxParticipants: 100,
+                  status: 'UPCOMING'
+                });
+                setCreateModalOpen(true);
+              }}
+              className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-semibold flex items-center shadow-md active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              <Plus size={16} className="mr-1.5" /> Schedule Webinar
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ====================================================
@@ -277,16 +404,21 @@ export const WebinarModule: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredWebinars.map(web => {
-            const isRegistered = registrations.some(r => r.webinarId === web.id && r.userId === currentUser.email);
+            const userEmail = (currentUser.email || '').trim().toLowerCase();
+            const isRegistered = registrations.some(
+              r => r.webinarId === web.id && (r.userId || '').trim().toLowerCase() === userEmail
+            );
+            const totalRegistrations = registrations.filter(r => r.webinarId === web.id).length;
+
             return (
               <div 
                 key={web.id}
-                className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow overflow-hidden flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:scale-[1.01]"
+                className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow overflow-hidden flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 group"
               >
                 {/* Header Image Thumbnail */}
                 <div className="h-44 relative overflow-hidden">
-                  <img src={web.thumbnail} alt={web.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <img src={web.thumbnail} alt={web.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                   
                   {/* Status Badges */}
                   <span className={`absolute top-3 right-3 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
@@ -301,8 +433,26 @@ export const WebinarModule: React.FC = () => {
                     {web.status}
                   </span>
 
+                  {/* Admin Quick Delete Icon Button */}
+                  {currentUser.role === 'ADMIN' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setWebinarToDelete(web);
+                      }}
+                      className="absolute top-3 left-3 p-1.5 rounded-lg bg-black/60 hover:bg-red-600 text-white/80 hover:text-white backdrop-blur-xs transition-colors"
+                      title="Delete Webinar"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+
                   <span className="absolute bottom-3 left-3 text-[10px] bg-slate-900/80 backdrop-blur-sm text-nexora-electric px-2.5 py-0.5 rounded font-bold uppercase tracking-wider">
                     {web.category}
+                  </span>
+
+                  <span className="absolute bottom-3 right-3 text-[10px] bg-black/60 backdrop-blur-sm text-white/90 px-2 py-0.5 rounded font-semibold flex items-center">
+                    <Video size={10} className="mr-1 text-sky-400" /> {web.platform}
                   </span>
                 </div>
 
@@ -317,46 +467,69 @@ export const WebinarModule: React.FC = () => {
                     </h3>
                     
                     <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
-                      <User size={13} className="mr-1.5 text-slate-400" />
-                      <span>{web.speaker} <span className="text-[10px] text-slate-400">({web.speakerDesignation})</span></span>
+                      <User size={13} className="mr-1.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{web.speaker} <span className="text-[10px] text-slate-400">({web.speakerDesignation})</span></span>
                     </div>
 
                     <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
-                      <CalendarIcon size={13} className="mr-1.5 text-slate-400" />
+                      <CalendarIcon size={13} className="mr-1.5 text-slate-400 shrink-0" />
                       <span>{web.date} at {web.startTime}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                      <span>👥 {totalRegistrations} registered</span>
+                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">
+                        Cap: {web.maxParticipants}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Actions Row */}
-                  <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/40 flex items-center justify-between">
+                  {/* Broadcast meeting link to all employees quick button */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2.5">
+                    
+                    {/* Send link to all button */}
                     <button
-                      onClick={() => setSelectedWebinar(web)}
-                      className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center"
+                      onClick={() => setBroadcastLinkWebinar(web)}
+                      className="w-full py-1.5 px-2.5 rounded-lg border border-sky-200 dark:border-sky-850 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-nexora-blue dark:text-sky-400 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all"
+                      title="Email webinar meeting link directly to all company employees"
                     >
-                      Details <ChevronRight size={14} className="ml-0.5" />
+                      <Mail size={13} />
+                      <span>📧 Send Link to All Staff ({allUsers.length})</span>
                     </button>
 
-                    {web.status !== 'COMPLETED' && web.status !== 'CANCELLED' ? (
+                    {/* Actions Row */}
+                    <div className="flex items-center justify-between">
                       <button
-                        onClick={() => handleRegister(web.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center transition-all duration-150 active:scale-95 ${
-                          isRegistered
-                            ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/25 hover:bg-green-500/20'
-                            : 'bg-nexora-blue hover:bg-nexora-blue/90 text-white shadow-sm'
-                        }`}
+                        onClick={() => setSelectedWebinar(web)}
+                        className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center"
                       >
-                        {isRegistered ? (
-                          <><Check size={12} className="mr-1" /> Registered</>
-                        ) : (
-                          'Register Now'
-                        )}
+                        Details <ChevronRight size={14} className="ml-0.5" />
                       </button>
-                    ) : (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                        {web.status === 'COMPLETED' ? 'Session Completed' : 'Cancelled'}
-                      </span>
-                    )}
+
+                      {web.status !== 'COMPLETED' && web.status !== 'CANCELLED' ? (
+                        <button
+                          onClick={() => handleRegister(web.id)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center transition-all duration-150 active:scale-95 cursor-pointer ${
+                            isRegistered
+                              ? 'bg-green-500/15 text-green-700 dark:text-green-300 border border-green-500/30 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/30'
+                              : 'bg-nexora-blue hover:bg-nexora-blue/90 text-white shadow-sm'
+                          }`}
+                          title={isRegistered ? 'Click to unregister' : 'Register for this webinar'}
+                        >
+                          {isRegistered ? (
+                            <><Check size={12} className="mr-1 text-green-500" /> Registered ✓</>
+                          ) : (
+                            'Register Now'
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                          {web.status === 'COMPLETED' ? 'Session Completed' : 'Cancelled'}
+                        </span>
+                      )}
+                    </div>
                   </div>
+
                 </div>
               </div>
             );
@@ -374,9 +547,14 @@ export const WebinarModule: React.FC = () => {
             {/* Drawer Header */}
             <div>
               <div className="flex justify-between items-start mb-4">
-                <span className="text-xs bg-nexora-blue/15 text-nexora-electric px-3 py-1 rounded font-bold uppercase tracking-wider">
-                  {selectedWebinar.category}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs bg-nexora-blue/15 text-nexora-electric px-3 py-1 rounded font-bold uppercase tracking-wider">
+                    {selectedWebinar.category}
+                  </span>
+                  <span className="text-xs px-2.5 py-1 rounded font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {selectedWebinar.platform}
+                  </span>
+                </div>
                 <button 
                   onClick={() => setSelectedWebinar(null)}
                   className="p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-500"
@@ -399,8 +577,28 @@ export const WebinarModule: React.FC = () => {
                 )}
               </div>
 
+              {/* Company-Wide Broadcast Meeting Link Box */}
+              <div className="mt-5 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-r from-sky-500/10 via-nexora-blue/5 to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center">
+                    <Send size={13} className="mr-1.5 text-nexora-blue" />
+                    Broadcast Meeting Link to ALL Employees
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Sends the webinar joining link directly to all {allUsers.length} staff emails.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setBroadcastLinkWebinar(selectedWebinar)}
+                  className="px-3.5 py-1.5 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold flex items-center shrink-0 shadow-xs active:scale-95 transition-all"
+                >
+                  <Mail size={13} className="mr-1.5" />
+                  Broadcast Link
+                </button>
+              </div>
+
               {/* Details List */}
-              <div className="mt-6 space-y-4">
+              <div className="mt-5 space-y-4">
                 
                 {/* Speaker Info */}
                 <div className="border border-slate-100 dark:border-slate-850 p-4 rounded-lg bg-slate-50/50 dark:bg-slate-900/10">
@@ -428,10 +626,18 @@ export const WebinarModule: React.FC = () => {
                     </span>
                   </div>
                   <div className="p-3 border border-slate-100 dark:border-slate-800 rounded bg-slate-50/30 dark:bg-slate-950/20">
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block mb-1">Platform</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-bold block mb-1">Platform & Meeting URL</span>
                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center">
                       <Video size={12} className="mr-1 text-slate-400" /> {selectedWebinar.platform}
                     </span>
+                    <a
+                      href={selectedWebinar.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-nexora-blue hover:underline truncate block mt-0.5"
+                    >
+                      {selectedWebinar.url}
+                    </a>
                   </div>
                 </div>
 
@@ -493,14 +699,22 @@ export const WebinarModule: React.FC = () => {
             {/* Drawer Actions Footer */}
             <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               
-              {/* Left: Admin Actions */}
+              {/* Left: Admin Actions (Edit & Delete) */}
               {currentUser.role === 'ADMIN' ? (
-                <button
-                  onClick={() => openEditForm(selectedWebinar)}
-                  className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 rounded-lg text-xs font-semibold"
-                >
-                  Edit Webinar Info
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => openEditForm(selectedWebinar)}
+                    className="px-3 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 rounded-lg text-xs font-semibold flex items-center"
+                  >
+                    <Edit3 size={13} className="mr-1.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => setWebinarToDelete(selectedWebinar)}
+                    className="px-3 py-2 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold flex items-center"
+                  >
+                    <Trash2 size={13} className="mr-1.5" /> Delete
+                  </button>
+                </div>
               ) : <div />}
 
               {/* Right: Registration / Launch Actions */}
@@ -510,24 +724,26 @@ export const WebinarModule: React.FC = () => {
                     <button
                       onClick={() => handleRegister(selectedWebinar.id)}
                       className={`px-4 py-2 text-xs font-semibold rounded-lg border ${
-                        registrations.some(r => r.webinarId === selectedWebinar.id && r.userId === currentUser.email)
-                          ? 'border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400'
+                        registrations.some(
+                          r => r.webinarId === selectedWebinar.id && (r.userId || '').trim().toLowerCase() === (currentUser.email || '').trim().toLowerCase()
+                        )
+                          ? 'border-green-500/30 bg-green-500/15 text-green-700 dark:text-green-300'
                           : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
-                      {registrations.some(r => r.webinarId === selectedWebinar.id && r.userId === currentUser.email) ? 'Registered ✓' : 'Register'}
+                      {registrations.some(
+                        r => r.webinarId === selectedWebinar.id && (r.userId || '').trim().toLowerCase() === (currentUser.email || '').trim().toLowerCase()
+                      ) ? 'Registered ✓' : 'Register'}
                     </button>
 
-                    {registrations.some(r => r.webinarId === selectedWebinar.id && r.userId === currentUser.email) && (
-                      <a
-                        href={selectedWebinar.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-semibold flex items-center shadow-md active:scale-95 transition-all duration-150"
-                      >
-                        Join Webinar <ExternalLink size={12} className="ml-1" />
-                      </a>
-                    )}
+                    <a
+                      href={selectedWebinar.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-semibold flex items-center shadow-md active:scale-95 transition-all duration-150"
+                    >
+                      Join Webinar <ExternalLink size={12} className="ml-1" />
+                    </a>
                   </>
                 ) : (
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-2">
@@ -543,7 +759,138 @@ export const WebinarModule: React.FC = () => {
       )}
 
       {/* ====================================================
-          SCHEDULER / CREATE DIALOG
+          DELETE CONFIRMATION MODAL
+          ==================================================== */}
+      {webinarToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-dark-card border border-red-200 dark:border-red-900/50 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-scale-in">
+            <div className="flex items-center space-x-3 text-red-600 dark:text-red-400">
+              <div className="p-3 bg-red-100 dark:bg-red-950/50 rounded-xl">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-base text-slate-900 dark:text-white">
+                  Delete Webinar?
+                </h3>
+                <p className="text-xs text-slate-400">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Are you sure you want to delete <strong className="text-slate-900 dark:text-white">"{webinarToDelete.title}"</strong>? 
+              This will permanently remove the webinar, its schedule, and all associated registrations from the database.
+            </p>
+
+            <div className="pt-2 flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setWebinarToDelete(null)}
+                className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all"
+              >
+                Yes, Delete Webinar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================
+          BROADCAST MEETING LINK TO ALL EMPLOYEES MODAL
+          ==================================================== */}
+      {broadcastLinkWebinar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-scale-in">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-sky-100 dark:bg-sky-950/50 rounded-xl text-nexora-blue">
+                  <Mail size={22} />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-base text-slate-900 dark:text-white">
+                    Send Meeting Link to ALL Employees
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Broadcast meeting invitation directly to all {allUsers.length} staff members.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setBroadcastLinkWebinar(null)}
+                className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Webinar Summary Card */}
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                {broadcastLinkWebinar.title}
+              </p>
+              <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 space-x-3">
+                <span>📅 {broadcastLinkWebinar.date} at {broadcastLinkWebinar.startTime}</span>
+                <span>📹 {broadcastLinkWebinar.platform}</span>
+              </div>
+              <p className="text-[11px] text-nexora-blue font-mono truncate">
+                Link: {broadcastLinkWebinar.url}
+              </p>
+            </div>
+
+            {/* Optional Custom Note */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-400 uppercase block mb-1">
+                Optional Message / Announcement Note
+              </label>
+              <textarea
+                rows={3}
+                value={broadcastCustomNote}
+                onChange={(e) => setBroadcastCustomNote(e.target.value)}
+                placeholder="e.g. The live masterclass will begin shortly. Please click the link to join the session on time!"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-nexora-blue"
+              />
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setBroadcastLinkWebinar(null)}
+                className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isBroadcasting}
+                onClick={handleBroadcastMeetingLink}
+                className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isBroadcasting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
+                    <span>Broadcasting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={13} />
+                    <span>Send to All {allUsers.length} Persons</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================
+          SCHEDULER / CREATE & EDIT DIALOG
           ==================================================== */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
@@ -561,7 +908,7 @@ export const WebinarModule: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateWebinar} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <form onSubmit={handleCreateWebinar} className="p-6 space-y-4 max-h-[72vh] overflow-y-auto">
               
               {/* Title */}
               <div>
@@ -759,27 +1106,63 @@ export const WebinarModule: React.FC = () => {
                 </select>
               </div>
 
+              {/* Broadcast meeting link to all employees checkbox */}
+              <div className="p-3.5 bg-sky-50/70 dark:bg-sky-950/30 rounded-xl border border-sky-200 dark:border-sky-850 flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="sendLinkToAllOnSchedule"
+                  checked={sendLinkToAllOnSchedule}
+                  onChange={(e) => setSendLinkToAllOnSchedule(e.target.checked)}
+                  className="mt-0.5 rounded text-nexora-blue focus:ring-nexora-blue"
+                />
+                <label htmlFor="sendLinkToAllOnSchedule" className="text-xs text-slate-700 dark:text-slate-300 leading-snug cursor-pointer">
+                  <strong>Send meeting link and webinar invitation to ALL employees ({allUsers.length} staff)</strong> immediately upon scheduling
+                </label>
+              </div>
+
               {/* Actions */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setCreateModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded text-xs font-semibold shadow"
-                >
-                  {editMode ? 'Save Changes' : 'Schedule Webinar'}
-                </button>
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                {editMode && selectedWebinar ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateModalOpen(false);
+                      setWebinarToDelete(selectedWebinar);
+                    }}
+                    className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded text-xs font-semibold flex items-center"
+                  >
+                    <Trash2 size={13} className="mr-1" /> Delete Webinar
+                  </button>
+                ) : <div />}
+
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setCreateModalOpen(false)}
+                    className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded text-xs font-semibold shadow"
+                  >
+                    {editMode ? 'Save Changes' : 'Schedule Webinar'}
+                  </button>
+                </div>
               </div>
 
             </form>
           </div>
         </div>
       )}
+
+      {/* Sudden Instant Email Modal */}
+      <InstantEmailModal
+        isOpen={instantEmailOpen}
+        onClose={() => setInstantEmailOpen(false)}
+        defaultPriority="HIGH"
+      />
 
     </div>
   );

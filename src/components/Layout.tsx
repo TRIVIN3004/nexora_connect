@@ -19,9 +19,11 @@ import {
   Check,
   MessageSquare,
   Gamepad2,
-  Megaphone
+  Megaphone,
+  Zap
 } from 'lucide-react';
 import { BroadcastModal } from './BroadcastModal';
+import { InstantEmailModal } from './InstantEmailModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -44,6 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
   // Retrieve user notifications
@@ -248,13 +251,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Right Header Panel Actions */}
           <div className="flex items-center space-x-3.5">
 
+            {/* Instant Email Action Button */}
+            <button
+              onClick={() => setIsInstantEmailModalOpen(true)}
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+              title="Send an immediate broadcast email to all company employees"
+            >
+              <Zap size={14} className="text-yellow-200 animate-pulse" />
+              <span>Instant Email</span>
+            </button>
+
             {/* Quick Broadcast Action Button */}
             <button
               onClick={() => setIsBroadcastModalOpen(true)}
               className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-nexora-blue to-sky-600 hover:from-nexora-blue/90 hover:to-sky-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
               title="Broadcast message to all company employees"
             >
-              <Megaphone size={14} className="text-yellow-300 animate-pulse" />
+              <Megaphone size={14} className="text-yellow-300" />
               <span>Broadcast</span>
             </button>
 
@@ -441,6 +454,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <BroadcastModal
         isOpen={isBroadcastModalOpen}
         onClose={() => setIsBroadcastModalOpen(false)}
+      />
+
+      {/* Global Sudden Instant Email Modal */}
+      <InstantEmailModal
+        isOpen={isInstantEmailModalOpen}
+        onClose={() => setIsInstantEmailModalOpen(false)}
       />
     </div>
   );

@@ -397,7 +397,10 @@ export const Dashboard: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeWebinars.map(web => {
-                  const registered = db.getWebinarRegistrations().some(r => r.webinarId === web.id && r.userId === currentUser.email);
+                  const userEmail = (currentUser.email || '').trim().toLowerCase();
+                  const registered = db.getWebinarRegistrations().some(
+                    r => r.webinarId === web.id && (r.userId || '').trim().toLowerCase() === userEmail
+                  );
                   return (
                     <div key={web.id} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/10 hover:border-slate-300 dark:hover:border-slate-700/80 transition-colors duration-200">
                       <div className="h-32 relative overflow-hidden">
@@ -419,16 +422,23 @@ export const Dashboard: React.FC = () => {
                         <div className="mt-4 flex items-center justify-between">
                           <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{web.date}</span>
                           {registered ? (
-                            <span className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+                            <button
+                              onClick={() => {
+                                db.unregisterForWebinar(web.id, currentUser.email);
+                                triggerRefresh();
+                              }}
+                              className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center bg-green-500/10 hover:bg-red-500/10 hover:text-red-600 px-2 py-0.5 rounded-full border border-green-500/20 transition-colors"
+                              title="Click to unregister"
+                            >
                               Registered ✓
-                            </span>
+                            </button>
                           ) : (
                             <button
                               onClick={() => {
                                 db.registerForWebinar(web.id, currentUser.email);
                                 triggerRefresh();
                               }}
-                              className="px-2.5 py-1 bg-nexora-blue text-white rounded text-[10px] font-bold hover:bg-nexora-blue/80 active:scale-95"
+                              className="px-2.5 py-1 bg-nexora-blue text-white rounded text-[10px] font-bold hover:bg-nexora-blue/80 active:scale-95 cursor-pointer"
                             >
                               Register
                             </button>

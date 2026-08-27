@@ -17,7 +17,7 @@ envContent.split('\n').forEach(line => {
 const client = createClient(url, key);
 
 async function check() {
-  const tables = ['users', 'webinars', 'meetings', 'recordings', 'knowledge_notes', 'tickets', 'feedbacks', 'audit_logs', 'notifications'];
+  const tables = ['users', 'webinars', 'webinar_registrations', 'meetings', 'recordings', 'knowledge_notes', 'tickets', 'feedbacks', 'audit_logs', 'notifications'];
   for (const t of tables) {
     const { data, error } = await client.from(t).select('*');
     if (error) {

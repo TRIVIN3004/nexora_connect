@@ -332,5 +332,72 @@ export class NotificationDispatcher {
       );
     });
   }
+
+  // 10. Broadcast Webinar Meeting Link to ALL Employees (All Persons)
+  dispatchWebinarLinkToAllEmployees(webinarId: string, senderName: string = 'Nexora Administrator', customNote?: string) {
+    const webinar = this.db.getWebinars().find(w => w.id === webinarId);
+    if (!webinar) return;
+
+    const allUsers = this.db.getUsers();
+    const dateTimeStr = `${webinar.date} at ${webinar.startTime}`;
+
+    allUsers.forEach(user => {
+      this.notifyUser(
+        user.email,
+        `📢 Webinar Link: ${webinar.title}`,
+        `Live Webinar link for "${webinar.title}" (${webinar.platform}) on ${dateTimeStr}. Click to join!`,
+        'WEBINAR_REMINDER',
+        () => {
+          EmailService.sendWebinarMeetingLinkBroadcast(
+            user.email,
+            user.name,
+            webinar.title,
+            dateTimeStr,
+            webinar.platform,
+            webinar.speaker,
+            webinar.speakerDesignation,
+            webinar.speakerOrganization,
+            webinar.url,
+            senderName,
+            customNote
+          );
+        }
+      );
+    });
+  }
+
+  // 11. Instant Sudden Email Broadcast to ALL Employees
+  dispatchInstantEmailToAll(
+    title: string,
+    content: string,
+    senderName: string,
+    priority: 'NORMAL' | 'HIGH' | 'URGENT' = 'NORMAL',
+    actionUrl?: string,
+    actionLabel?: string
+  ) {
+    const allUsers = this.db.getUsers();
+    const summary = content.length > 120 ? content.slice(0, 117) + '...' : content;
+
+    allUsers.forEach(user => {
+      this.notifyUser(
+        user.email,
+        `⚡ ${title}`,
+        summary,
+        'ANNOUNCEMENT',
+        () => {
+          EmailService.sendInstantEmailToAll(
+            user.email,
+            user.name,
+            title,
+            content,
+            senderName,
+            priority,
+            actionUrl,
+            actionLabel
+          );
+        }
+      );
+    });
+  }
 }
 

@@ -127,7 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('nexora_email_api_key', (import.meta.env.VITE_RESEND_API_KEY as string) || 're_placeholder_key_for_development');
     }
     if (!localStorage.getItem('nexora_email_from')) {
-      localStorage.setItem('nexora_email_from', 'onboarding@resend.dev');
+      localStorage.setItem('nexora_email_from', (import.meta.env.VITE_RESEND_FROM_EMAIL as string) || 'connect@mail.nexoratechs.xyz');
     }
   }, []);
 

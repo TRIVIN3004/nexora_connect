@@ -16,18 +16,21 @@ import {
   UserMinus,
   UserPlus,
   Trash2,
-  Pin
+  Pin,
+  Zap
 } from 'lucide-react';
 import type { User, KnowledgeNote } from '../services/database';
 import { EmailService } from '../services/email';
 import type { SentEmail } from '../services/email';
 import { BroadcastModal } from './BroadcastModal';
+import { InstantEmailModal } from './InstantEmailModal';
 
 export const AdminPanel: React.FC = () => {
   const { db, currentUser, triggerRefresh, setCurrentTab } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'users' | 'broadcasts' | 'moderation' | 'audit' | 'emails'>('analytics');
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleteSuccessBanner, setDeleteSuccessBanner] = useState<string | null>(null);
@@ -541,18 +544,26 @@ export const AdminPanel: React.FC = () => {
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-450">
                 Outbound SMTP Logs ({emailLogs.length})
               </h3>
-              {emailLogs.length > 0 && (
+              <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => {
-                    EmailService.clearEmailLogs();
-                    setSelectedLogEmail(null);
-                    triggerRefresh();
-                  }}
-                  className="text-[9px] font-bold text-red-500 hover:underline"
+                  onClick={() => setIsInstantEmailModalOpen(true)}
+                  className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold flex items-center shadow-xs"
                 >
-                  Clear logs
+                  <Zap size={11} className="mr-1 text-yellow-200" /> Instant Email
                 </button>
-              )}
+                {emailLogs.length > 0 && (
+                  <button
+                    onClick={() => {
+                      EmailService.clearEmailLogs();
+                      setSelectedLogEmail(null);
+                      triggerRefresh();
+                    }}
+                    className="text-[9px] font-bold text-red-500 hover:underline"
+                  >
+                    Clear logs
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
@@ -724,6 +735,12 @@ export const AdminPanel: React.FC = () => {
       <BroadcastModal
         isOpen={isBroadcastModalOpen}
         onClose={() => setIsBroadcastModalOpen(false)}
+      />
+
+      {/* Instant Sudden Email Modal */}
+      <InstantEmailModal
+        isOpen={isInstantEmailModalOpen}
+        onClose={() => setIsInstantEmailModalOpen(false)}
       />
 
     </div>

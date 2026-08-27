@@ -166,7 +166,7 @@ export class EmailService {
 
     // Real email dispatch if Resend API Key is configured
     const apiKey = (import.meta as any).env?.VITE_RESEND_API_KEY || localStorage.getItem('nexora_email_api_key');
-    const fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from') || 'onboarding@resend.dev';
+    const fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from') || 'connect@mail.nexoratechs.xyz';
 
     if (apiKey) {
       // If still using default onboarding sandbox, limit to verified account; if custom domain is configured, send directly to recipient
@@ -237,7 +237,119 @@ export class EmailService {
     this.sendMockEmail(to, subject, 'WEBINAR_REGISTRATION_CONFIRM', body);
   }
 
-  // 2. Webinar Reminder
+  // 2. Webinar Meeting Link Broadcast to ALL Employees (All Persons)
+  static sendWebinarMeetingLinkBroadcast(
+    to: string,
+    userName: string,
+    webinarTitle: string,
+    dateTime: string,
+    platform: string,
+    speaker: string,
+    speakerDesignation: string,
+    speakerOrganization: string,
+    joinLink: string,
+    senderName: string = 'Nexora Administrator',
+    customMessage?: string
+  ) {
+    const subject = `📢 Live Webinar Link: "${webinarTitle}" — ${dateTime}`;
+    const body = `
+      <div class="welcome">Hello ${userName}, 👋</div>
+      <p>You are invited to attend our upcoming live company webinar hosted on <strong>${platform}</strong>.</p>
+      
+      ${customMessage ? `
+      <div style="background-color: #EFF6FF; border-left: 4px solid #0878C9; padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 13px; color: #1E3A8A;">
+        <strong>Message from ${senderName}:</strong><br/>
+        <span style="white-space: pre-wrap; margin-top: 4px; display: inline-block;">${customMessage}</span>
+      </div>
+      ` : ''}
+
+      <div class="details-card">
+        <div class="details-row">
+          <div class="label">Webinar Topic</div>
+          <div class="value" style="font-size: 15px; font-weight: bold; color: #0F172A;">${webinarTitle}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Keynote Speaker</div>
+          <div class="value">${speaker} <span style="font-size: 12px; color: #64748B;">(${speakerDesignation}${speakerOrganization ? `, ${speakerOrganization}` : ''})</span></div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Date & Time</div>
+          <div class="value">${dateTime}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Virtual Meeting Platform</div>
+          <div class="value" style="font-weight: 600; color: #0878C9;">${platform}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Direct Meeting Link</div>
+          <div class="value" style="word-break: break-all;"><a href="${joinLink}" target="_blank" style="color: #0878C9; font-weight: 600;">${joinLink}</a></div>
+        </div>
+      </div>
+
+      <div class="btn-container">
+        <a href="${joinLink}" class="btn" target="_blank" style="background-color: #0878C9; font-size: 15px; padding: 14px 34px;">
+          🚀 Click Here to Join Live Webinar (${platform})
+        </a>
+      </div>
+
+      <p style="font-size: 12px; color: #64748B; text-align: center; margin-top: 15px;">
+        <em>Note: This meeting link has been broadcast to all team members across the company. You can join directly at the scheduled time.</em>
+      </p>
+    `;
+    this.sendMockEmail(to, subject, 'WEBINAR_MEETING_LINK_BROADCAST', body);
+  }
+
+  // 3. Instant / Sudden Email to All Employees
+  static sendInstantEmailToAll(
+    to: string,
+    userName: string,
+    title: string,
+    content: string,
+    senderName: string,
+    priority: 'NORMAL' | 'HIGH' | 'URGENT' = 'NORMAL',
+    actionUrl?: string,
+    actionLabel?: string
+  ) {
+    const priorityColor = priority === 'URGENT' ? '#DC2626' : priority === 'HIGH' ? '#D97706' : '#0878C9';
+    const priorityBadge = priority === 'URGENT' ? '🚨 URGENT' : priority === 'HIGH' ? '⚠️ HIGH PRIORITY' : '📢 NOTICE';
+    const subject = `[${priorityBadge}] ${title}`;
+    
+    const body = `
+      <div class="welcome">Hello ${userName},</div>
+      <p>An immediate broadcast communication has been dispatched by <strong>${senderName}</strong> to all employees:</p>
+      
+      <div class="details-card" style="border-left-color: ${priorityColor};">
+        <div style="margin-bottom: 10px;">
+          <span style="font-size: 10px; font-weight: bold; background-color: ${priorityColor}; color: #ffffff; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">
+            ${priority} PRIORITY
+          </span>
+        </div>
+        <div class="details-row">
+          <div class="label">Subject</div>
+          <div class="value" style="font-size: 16px; font-weight: bold; color: #0F172A;">${title}</div>
+        </div>
+        <div class="details-row" style="margin-top: 14px;">
+          <div class="label">Message</div>
+          <div class="value" style="margin-top: 6px; line-height: 1.7; white-space: pre-wrap; font-size: 13.5px;">${content}</div>
+        </div>
+      </div>
+
+      ${actionUrl ? `
+      <div class="btn-container">
+        <a href="${actionUrl}" class="btn" target="_blank" style="background-color: ${priorityColor};">
+          ${actionLabel || 'View Details / Join Now'}
+        </a>
+      </div>
+      ` : ''}
+
+      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-top: 20px;">
+        This message was delivered immediately to all registered company members on Nexora Connect.
+      </p>
+    `;
+    this.sendMockEmail(to, subject, 'INSTANT_EMAIL_BROADCAST', body);
+  }
+
+  // 4. Webinar Reminder
   static sendWebinarReminder(to: string, userName: string, webinarTitle: string, timeString: string, joinLink: string) {
     const subject = `Reminder: "${webinarTitle}" starts in ${timeString}`;
     const body = `
@@ -428,4 +540,61 @@ export class EmailService {
     `;
     this.sendMockEmail(to, subject, 'COMPANY_BROADCAST', body);
   }
+
+  // 9. User Welcome & Onboarding Credentials
+  static sendWelcomeUserEmail(
+    to: string,
+    userName: string,
+    password: string = 'Nexora@123',
+    designation: string = 'Software Associate',
+    organization: string = 'Nexora Technologies'
+  ) {
+    const subject = `Welcome to Nexora Connect — Your Account Details & Access Portal`;
+    const body = `
+      <div class="welcome">Welcome to Nexora Connect, ${userName}! 👋</div>
+      <p>We are delighted to welcome you to the <strong>${organization}</strong> workspace. Your official corporate account on <strong>Nexora Connect</strong> has been provisioned and is ready for use.</p>
+      
+      <div class="details-card">
+        <div class="details-row">
+          <div class="label">Portal Access</div>
+          <div class="value">Nexora Connect Team Hub</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Registered Email</div>
+          <div class="value" style="font-family: monospace; color: #0878C9; font-weight: bold;">${to}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Default Password</div>
+          <div class="value" style="font-family: monospace; color: #0878C9; font-weight: bold;">${password}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Designation</div>
+          <div class="value">${designation}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Organization</div>
+          <div class="value">${organization}</div>
+        </div>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px 18px; margin: 20px 0;">
+        <div style="font-weight: bold; color: #1E293B; font-size: 13px; margin-bottom: 6px;">Available Workspace Modules:</div>
+        <div style="font-size: 12px; color: #475569; margin-bottom: 4px;">• 📅 <strong>Webinars:</strong> Register & attend technical live sessions.</div>
+        <div style="font-size: 12px; color: #475569; margin-bottom: 4px;">• ⏰ <strong>Meetings:</strong> Direct scheduling with Google Meet & Teams.</div>
+        <div style="font-size: 12px; color: #475569; margin-bottom: 4px;">• 📚 <strong>Knowledge Wiki:</strong> Search and publish tech documentation.</div>
+        <div style="font-size: 12px; color: #475569; margin-bottom: 4px;">• 📹 <strong>Recordings:</strong> Catch up with previous session archives.</div>
+        <div style="font-size: 12px; color: #475569;">• 🎫 <strong>Support Desk:</strong> Raise internal queries & IT tickets.</div>
+      </div>
+
+      <div class="btn-container">
+        <a href="https://nexora-connect.vercel.app" class="btn" target="_blank">Login to Nexora Connect</a>
+      </div>
+      
+      <p style="font-size: 11px; color: #94A3B8; text-align: center;">
+        <em>Security Tip: Please update your password in Profile Settings after your first login.</em>
+      </p>
+    `;
+    this.sendMockEmail(to, subject, 'USER_ONBOARDING', body);
+  }
 }
+
