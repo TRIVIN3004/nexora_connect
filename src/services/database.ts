@@ -521,6 +521,26 @@ const defaultUsers: User[] = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'sangamithrakesavan8@gmail.com',
+    email: 'sangamithrakesavan8@gmail.com',
+    name: 'Sangamithra K',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'angelsharon283@gmail.com',
+    email: 'angelsharon283@gmail.com',
+    name: 'Sharon',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
