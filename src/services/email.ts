@@ -176,29 +176,52 @@ export class EmailService {
     if (apiKey) {
       const recipient = fromAddress === 'onboarding@resend.dev' ? 'contactnexoratechs@gmail.com' : to;
 
-      fetch('https://api.resend.com/emails', {
+      const emailPayload = {
+        from: `Nexora Connect <${fromAddress}>`,
+        to: [recipient],
+        reply_to: 'contactnexoratechs@gmail.com',
+        subject: subject,
+        html: fullHtml,
+        apiKey: apiKey
+      };
+
+      // 1. Try local / Vercel serverless proxy endpoint to avoid browser CORS
+      fetch('/api/send-email', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: `Nexora Connect <${fromAddress}>`,
-          to: [recipient],
-          reply_to: 'contactnexoratechs@gmail.com',
-          subject: subject,
-          html: fullHtml
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emailPayload)
       })
-      .then(res => {
+      .then(async res => {
         if (res.ok) {
-          console.log(`[SMTP RESEND API] Real email successfully sent to ${recipient} via Resend!`);
+          const data = await res.json().catch(() => ({}));
+          console.log(`[SMTP RESEND API] Real email successfully sent to ${recipient}! ID:`, data.id || 'ok');
         } else {
-          res.json().then(err => console.error('[SMTP RESEND API] Error response from Resend:', err));
+          // 2. Fallback to direct fetch if proxy unavailable
+          return fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              from: `Nexora Connect <${fromAddress}>`,
+              to: [recipient],
+              reply_to: 'contactnexoratechs@gmail.com',
+              subject: subject,
+              html: fullHtml
+            })
+          }).then(async r => {
+            if (r.ok) {
+              console.log(`[SMTP RESEND API] Fallback email sent to ${recipient}!`);
+            } else {
+              const err = await r.json().catch(() => ({}));
+              console.error('[SMTP RESEND API] Fallback error from Resend:', err);
+            }
+          });
         }
       })
       .catch(err => {
-        console.error('[SMTP RESEND API] Connection failed:', err);
+        console.error('[SMTP RESEND API] Dispatch failed:', err);
       });
     }
   }
