@@ -31,6 +31,7 @@ export const AdminPanel: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'users' | 'broadcasts' | 'moderation' | 'audit' | 'emails'>('analytics');
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
+  const [instantEmailInitialTargets, setInstantEmailInitialTargets] = useState<string[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [emailFilterQuery, setEmailFilterQuery] = useState('');
   const [emailCategoryFilter, setEmailCategoryFilter] = useState<'ALL' | 'INSTANT' | 'WEBINAR' | 'ONBOARDING' | 'BROADCAST'>('ALL');
@@ -414,20 +415,34 @@ export const AdminPanel: React.FC = () => {
                           )}
                         </td>
                         <td className="p-3 text-right">
-                          {isSelf ? (
-                            <span className="text-[10px] text-slate-400 font-medium italic">
-                              Protected
-                            </span>
-                          ) : (
+                          <div className="flex items-center justify-end space-x-1.5">
                             <button
-                              onClick={() => setUserToDelete(user)}
-                              className="inline-flex items-center space-x-1 px-2.5 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/15 border border-red-200 dark:border-red-500/20 rounded-lg text-[10px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                              title={`Remove ${user.name} from company`}
+                              onClick={() => {
+                                setInstantEmailInitialTargets([user.email]);
+                                setIsInstantEmailModalOpen(true);
+                              }}
+                              className="inline-flex items-center space-x-1 px-2.5 py-1 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/15 border border-amber-200 dark:border-amber-500/20 rounded-lg text-[10px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              title={`Send instant email to ${user.name}`}
                             >
-                              <UserMinus size={12} />
-                              <span>Remove</span>
+                              <Zap size={11} className="text-amber-500" />
+                              <span>Email</span>
                             </button>
-                          )}
+
+                            {isSelf ? (
+                              <span className="text-[10px] text-slate-400 font-medium italic px-2">
+                                Protected
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setUserToDelete(user)}
+                                className="inline-flex items-center space-x-1 px-2.5 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/15 border border-red-200 dark:border-red-500/20 rounded-lg text-[10px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                                title={`Remove ${user.name} from company`}
+                              >
+                                <UserMinus size={12} />
+                                <span>Remove</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -817,7 +832,11 @@ export const AdminPanel: React.FC = () => {
       {/* Instant Sudden Email Modal */}
       <InstantEmailModal
         isOpen={isInstantEmailModalOpen}
-        onClose={() => setIsInstantEmailModalOpen(false)}
+        onClose={() => {
+          setIsInstantEmailModalOpen(false);
+          setInstantEmailInitialTargets([]);
+        }}
+        initialTargetEmails={instantEmailInitialTargets}
       />
 
     </div>

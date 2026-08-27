@@ -399,5 +399,45 @@ export class NotificationDispatcher {
       );
     });
   }
+
+  // 12. Instant Email to Particular / Specific Person(s)
+  dispatchInstantEmailToTarget(
+    targetEmails: string[],
+    title: string,
+    content: string,
+    senderName: string,
+    priority: 'NORMAL' | 'HIGH' | 'URGENT' = 'NORMAL',
+    actionUrl?: string,
+    actionLabel?: string
+  ) {
+    const allUsers = this.db.getUsers();
+    const userMap = new Map(allUsers.map(u => [u.email.toLowerCase(), u]));
+    const summary = content.length > 120 ? content.slice(0, 117) + '...' : content;
+
+    targetEmails.forEach(email => {
+      const normalized = email.trim().toLowerCase();
+      const existingUser = userMap.get(normalized);
+      const recipientName = existingUser ? existingUser.name : normalized.split('@')[0];
+
+      this.notifyUser(
+        normalized,
+        `⚡ ${title}`,
+        summary,
+        'ANNOUNCEMENT',
+        () => {
+          EmailService.sendInstantEmailToAll(
+            normalized,
+            recipientName,
+            title,
+            content,
+            senderName,
+            priority,
+            actionUrl,
+            actionLabel
+          );
+        }
+      );
+    });
+  }
 }
 
