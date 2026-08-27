@@ -306,6 +306,66 @@ const mockUsers = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'ajay872072@gmail.com',
+    email: 'ajay872072@gmail.com',
+    name: 'Ajay kumar',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'vishnu30426@gmail.com',
+    email: 'vishnu30426@gmail.com',
+    name: 'Vishnu hasan R',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'srdharshanraj@gmail.com',
+    email: 'srdharshanraj@gmail.com',
+    name: 'Dharsha raj S R',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'bharathgandhi92@gmail.com',
+    email: 'bharathgandhi92@gmail.com',
+    name: 'Bharath G',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'gokulpriyan96@gmail.com',
+    email: 'gokulpriyan96@gmail.com',
+    name: 'Gokul Priyan',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'nidiyarajkadavan@gmail.com',
+    email: 'nidiyarajkadavan@gmail.com',
+    name: 'Nidiya Raj Kadavan',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 

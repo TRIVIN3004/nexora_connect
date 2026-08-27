@@ -33,9 +33,9 @@ const client = createClient(supabaseUrl, supabaseKey);
 
 const newUsers = [
   {
-    id: 'sanjayvijay20051512@gmail.com',
-    email: 'sanjayvijay20051512@gmail.com',
-    name: 'Sanjay c',
+    id: 'ajay872072@gmail.com',
+    email: 'ajay872072@gmail.com',
+    name: 'Ajay kumar',
     role: 'EMPLOYEE',
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     designation: 'Software Associate',
@@ -43,9 +43,9 @@ const newUsers = [
     password: 'Nexora@123'
   },
   {
-    id: 'aaryanjain950@gmail.com',
-    email: 'aaryanjain950@gmail.com',
-    name: 'Aaryan',
+    id: 'vishnu30426@gmail.com',
+    email: 'vishnu30426@gmail.com',
+    name: 'Vishnu hasan R',
     role: 'EMPLOYEE',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
     designation: 'Software Associate',
@@ -53,9 +53,39 @@ const newUsers = [
     password: 'Nexora@123'
   },
   {
-    id: 'mgokulashri944@gmail.com',
-    email: 'mgokulashri944@gmail.com',
-    name: 'M Gokulashri',
+    id: 'srdharshanraj@gmail.com',
+    email: 'srdharshanraj@gmail.com',
+    name: 'Dharsha raj S R',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'bharathgandhi92@gmail.com',
+    email: 'bharathgandhi92@gmail.com',
+    name: 'Bharath G',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'gokulpriyan96@gmail.com',
+    email: 'gokulpriyan96@gmail.com',
+    name: 'Gokul Priyan',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'nidiyarajkadavan@gmail.com',
+    email: 'nidiyarajkadavan@gmail.com',
+    name: 'Nidiya Raj Kadavan',
     role: 'EMPLOYEE',
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
     designation: 'Software Associate',
@@ -101,7 +131,7 @@ function renderWelcomeEmail(user) {
       border: 1px solid #E2E8F0;
     }
     .header {
-      background: linear-gradient(135deg, #06152F 0%, #0D2852 100%);
+      background: linear-gradient(135deg, #06152F 0%, #0A2540 100%);
       padding: 36px 30px;
       text-align: center;
       border-bottom: 3px solid #0878C9;
@@ -115,41 +145,30 @@ function renderWelcomeEmail(user) {
     }
     .header p {
       color: #16B9FF;
-      margin: 6px 0 0 0;
+      margin: 8px 0 0 0;
       font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 2px;
       font-weight: 600;
     }
     .content {
-      padding: 40px 32px;
+      padding: 36px 30px;
       color: #334155;
-      line-height: 1.65;
+      line-height: 1.6;
     }
-    .welcome {
+    .welcome-title {
       font-size: 20px;
       font-weight: 700;
-      margin-bottom: 16px;
       color: #0F172A;
-    }
-    .badge {
-      display: inline-block;
-      background: #E0F2FE;
-      color: #0284C7;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .details-card {
       background-color: #F8FAFC;
+      border: 1px solid #E2E8F0;
       border-left: 4px solid #0878C9;
       border-radius: 8px;
-      padding: 22px;
-      margin: 25px 0;
-      border: 1px solid #E2E8F0;
-      border-left-width: 4px;
+      padding: 20px;
+      margin: 24px 0;
     }
     .details-row {
       margin-bottom: 12px;
@@ -166,29 +185,30 @@ function renderWelcomeEmail(user) {
     }
     .value {
       color: #0F172A;
-      font-size: 15px;
+      font-size: 14px;
+      margin-top: 3px;
       font-weight: 600;
-      margin-top: 2px;
     }
     .value.mono {
       font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
       color: #0878C9;
-      background: #EFF6FF;
-      padding: 2px 6px;
-      border-radius: 4px;
+      background: #EBF5FF;
       display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 13px;
     }
     .feature-grid {
-      margin: 25px 0;
-      background: #FAFAFA;
+      background: #F1F5F9;
       border-radius: 8px;
-      padding: 16px;
-      border: 1px solid #F1F5F9;
+      padding: 16px 20px;
+      margin: 24px 0;
     }
     .feature-item {
       font-size: 13px;
-      color: #475569;
+      color: #334155;
       margin-bottom: 8px;
+      line-height: 1.4;
     }
     .feature-item:last-child {
       margin-bottom: 0;
@@ -198,7 +218,7 @@ function renderWelcomeEmail(user) {
       margin: 32px 0;
     }
     .btn {
-      background: linear-gradient(135deg, #0878C9 0%, #0284C7 100%);
+      background: linear-gradient(135deg, #0878C9 0%, #0660A3 100%);
       color: #FFFFFF !important;
       padding: 14px 36px;
       text-decoration: none;
@@ -219,8 +239,8 @@ function renderWelcomeEmail(user) {
     .footer-logo {
       font-weight: 800;
       color: #06152F;
-      font-size: 14px;
       margin-bottom: 4px;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
@@ -228,18 +248,16 @@ function renderWelcomeEmail(user) {
   <div class="container">
     <div class="header">
       <h1>NEXORA CONNECT</h1>
-      <p>Learn • Collaborate • Share • Grow</p>
+      <p>Official Employee Portal</p>
     </div>
     <div class="content">
-      <div class="welcome">Welcome to Nexora Connect, ${user.name}! 👋</div>
-      <div class="badge">Account Ready</div>
-      
-      <p>We are delighted to welcome you to the <strong>Nexora Technologies</strong> team workspace. Your official corporate account on <strong>Nexora Connect</strong> has been created and configured.</p>
+      <div class="welcome-title">Welcome aboard, ${user.name}! 👋</div>
+      <p>Your official employee portal account on <strong>Nexora Connect</strong> is provisioned and ready for access. Please use your credentials below to log in:</p>
       
       <div class="details-card">
         <div class="details-row">
-          <div class="label">Portal Access</div>
-          <div class="value">Nexora Connect Workspace</div>
+          <div class="label">Portal Web Address</div>
+          <div class="value"><a href="https://nexora-connect.vercel.app" style="color: #0878C9; text-decoration: none;">https://nexora-connect.vercel.app</a></div>
         </div>
         <div class="details-row">
           <div class="label">Registered Email</div>
