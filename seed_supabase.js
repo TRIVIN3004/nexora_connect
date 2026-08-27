@@ -28,8 +28,8 @@ const client = createClient(correctedUrl, supabaseKey);
 // Define Mock Data matching original app defaults
 const mockUsers = [
   {
-    id: 'contact@nexoratechs.com',
-    email: 'contact@nexoratechs.com',
+    id: 'contactnexoratechs@gmail.com',
+    email: 'contactnexoratechs@gmail.com',
     name: 'Administrator',
     role: 'ADMIN',
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
@@ -491,7 +491,7 @@ const mockMeetings = [
     id: 'meet-2',
     title: 'Sprint Planning & Backlog Grooming',
     description: 'Review backlog, estimate issues, and define the roadmap for the Nexora dashboard enhancements.',
-    organizerId: 'contact@nexoratechs.com',
+    organizerId: 'contactnexoratechs@gmail.com',
     participants: ['employee@nexora.com', 'mentor@nexora.com', 'intern@nexora.com'],
     date: '2026-08-25',
     startTime: '15:00',
@@ -506,7 +506,7 @@ const mockMeetings = [
     title: 'Weekly Team Sync',
     description: 'Check progress across frontend modules and discuss devops infrastructure deployments.',
     organizerId: 'employee@nexora.com',
-    participants: ['intern@nexora.com', 'mentor@nexora.com', 'contact@nexoratechs.com'],
+    participants: ['intern@nexora.com', 'mentor@nexora.com', 'contactnexoratechs@gmail.com'],
     date: '2026-08-24',
     startTime: '09:00',
     endTime: '10:00',
@@ -526,7 +526,7 @@ const mockTickets = [
     priority: 'HIGH',
     status: 'ASSIGNED',
     createdById: 'intern@nexora.com',
-    assignedToId: 'contact@nexoratechs.com',
+    assignedToId: 'contactnexoratechs@gmail.com',
     createdAt: '2026-08-25T10:00:00Z',
     updatedAt: '2026-08-25T10:30:00Z'
   },
@@ -547,7 +547,7 @@ const mockComments = [
   {
     id: 'c-1',
     ticketId: 'NX-10025',
-    userId: 'contact@nexoratechs.com',
+    userId: 'contactnexoratechs@gmail.com',
     userName: 'Administrator',
     userRole: 'ADMIN',
     comment: 'Looking into this. It appears your AD account was not mapped to the internship evaluation group. Will correct this shortly.',
@@ -635,7 +635,7 @@ const mockFeedbacks = [
 const mockAuditLogs = [
   {
     id: 'log-1',
-    userId: 'contact@nexoratechs.com',
+    userId: 'contactnexoratechs@gmail.com',
     userName: 'Administrator',
     action: 'CREATE_WEBINAR',
     entity: 'Webinar',
@@ -647,7 +647,7 @@ const mockAuditLogs = [
 const mockCompanyMessages = [
   {
     id: 'msg-welcome-all',
-    senderEmail: 'contact@nexoratechs.com',
+    senderEmail: 'contactnexoratechs@gmail.com',
     senderName: 'Administrator',
     senderAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     senderRole: 'ADMIN',
@@ -658,7 +658,7 @@ const mockCompanyMessages = [
     targetAudience: 'ALL_EMPLOYEES',
     createdAt: new Date().toISOString(),
     pinned: true,
-    acknowledgments: ['contact@nexoratechs.com', 'mentor@nexora.com', 'employee@nexora.com'],
+    acknowledgments: ['contactnexoratechs@gmail.com', 'mentor@nexora.com', 'employee@nexora.com'],
     tags: ['Welcome', 'Company Update', 'Nexora Connect']
   }
 ];

@@ -183,8 +183,8 @@ export interface AuditLog {
 
 const defaultUsers: User[] = [
   {
-    id: 'contact@nexoratechs.com',
-    email: 'contact@nexoratechs.com',
+    id: 'contactnexoratechs@gmail.com',
+    email: 'contactnexoratechs@gmail.com',
     name: 'Administrator',
     role: 'ADMIN',
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
@@ -567,7 +567,7 @@ const defaultUsers: User[] = [
 const defaultCompanyMessages: CompanyMessage[] = [
   {
     id: 'msg-welcome-all',
-    senderEmail: 'contact@nexoratechs.com',
+    senderEmail: 'contactnexoratechs@gmail.com',
     senderName: 'Administrator',
     senderAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     senderRole: 'ADMIN',
@@ -578,7 +578,7 @@ const defaultCompanyMessages: CompanyMessage[] = [
     targetAudience: 'ALL_EMPLOYEES',
     createdAt: new Date().toISOString(),
     pinned: true,
-    acknowledgments: ['contact@nexoratechs.com', 'mentor@nexora.com', 'employee@nexora.com'],
+    acknowledgments: ['contactnexoratechs@gmail.com', 'mentor@nexora.com', 'employee@nexora.com'],
     tags: ['Welcome', 'Company Update', 'Nexora Connect']
   }
 ];
@@ -594,7 +594,7 @@ const defaultBookmarks: Bookmark[] = [];
 const defaultNotifications: Notification[] = [
   {
     id: 'notif-welcome-contact',
-    userId: 'contact@nexoratechs.com',
+    userId: 'contactnexoratechs@gmail.com',
     title: '📢 🌟 Welcome to Nexora Connect – Company-Wide Collaboration & Updates',
     message: 'Welcome to our centralized Nexora Connect company portal! Explore webinars, meetings, recordings, and company broadcasts.',
     type: 'ANNOUNCEMENT',
