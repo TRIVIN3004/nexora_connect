@@ -32,6 +32,8 @@ export const AdminPanel: React.FC = () => {
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [emailFilterQuery, setEmailFilterQuery] = useState('');
+  const [emailCategoryFilter, setEmailCategoryFilter] = useState<'ALL' | 'INSTANT' | 'WEBINAR' | 'ONBOARDING' | 'BROADCAST'>('ALL');
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleteSuccessBanner, setDeleteSuccessBanner] = useState<string | null>(null);
   
@@ -539,7 +541,7 @@ export const AdminPanel: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* List panel */}
-          <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow p-5 space-y-4">
+          <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow p-5 space-y-3">
             <div className="flex justify-between items-center border-b pb-2 border-slate-100 dark:border-slate-850">
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-450">
                 Outbound SMTP Logs ({emailLogs.length})
@@ -547,7 +549,7 @@ export const AdminPanel: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setIsInstantEmailModalOpen(true)}
-                  className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold flex items-center shadow-xs"
+                  className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold flex items-center shadow-xs cursor-pointer"
                 >
                   <Zap size={11} className="mr-1 text-yellow-200" /> Instant Email
                 </button>
@@ -558,7 +560,7 @@ export const AdminPanel: React.FC = () => {
                       setSelectedLogEmail(null);
                       triggerRefresh();
                     }}
-                    className="text-[9px] font-bold text-red-500 hover:underline"
+                    className="text-[9px] font-bold text-red-500 hover:underline cursor-pointer"
                   >
                     Clear logs
                   </button>
@@ -566,28 +568,103 @@ export const AdminPanel: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
-              {emailLogs.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-400 italic">No emails sent yet. Trigger notifications to log SMTP templates.</div>
-              ) : (
-                emailLogs.map(mail => (
-                  <div
-                    key={mail.id}
-                    onClick={() => setSelectedLogEmail(mail)}
-                    className={`p-3 border rounded-lg cursor-pointer text-left transition-colors ${
-                      selectedLogEmail?.id === mail.id
-                        ? 'border-nexora-blue bg-nexora-blue/5 dark:bg-nexora-blue/10'
-                        : 'border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
+            {/* Email Search & Filter Chips */}
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={emailFilterQuery}
+                onChange={(e) => setEmailFilterQuery(e.target.value)}
+                placeholder="Search by recipient or subject..."
+                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-nexora-blue"
+              />
+
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { id: 'ALL', label: 'All' },
+                  { id: 'INSTANT', label: '⚡ Instant' },
+                  { id: 'WEBINAR', label: '📹 Webinar' },
+                  { id: 'ONBOARDING', label: '👋 Onboarding' },
+                  { id: 'BROADCAST', label: '📢 Broadcast' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setEmailCategoryFilter(f.id as any)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
+                      emailCategoryFilter === f.id
+                        ? 'bg-nexora-blue text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                     }`}
                   >
-                    <span className="text-[9px] text-slate-400 block mb-1 font-mono">To: {mail.to}</span>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{mail.subject}</h4>
-                    <span className="text-[9px] text-slate-450 block mt-2 text-right">
-                      {new Date(mail.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                ))
-              )}
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+              {(() => {
+                const filtered = emailLogs.filter(mail => {
+                  const matchesSearch = !emailFilterQuery.trim() || 
+                    mail.to.toLowerCase().includes(emailFilterQuery.toLowerCase()) ||
+                    mail.subject.toLowerCase().includes(emailFilterQuery.toLowerCase());
+                  
+                  let matchesCat = true;
+                  if (emailCategoryFilter === 'INSTANT') matchesCat = mail.templateType.includes('INSTANT');
+                  if (emailCategoryFilter === 'WEBINAR') matchesCat = mail.templateType.includes('WEBINAR');
+                  if (emailCategoryFilter === 'ONBOARDING') matchesCat = mail.templateType.includes('ONBOARDING') || mail.templateType.includes('WELCOME');
+                  if (emailCategoryFilter === 'BROADCAST') matchesCat = mail.templateType.includes('BROADCAST');
+                  
+                  return matchesSearch && matchesCat;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                      No emails match your filter.
+                    </div>
+                  );
+                }
+
+                return filtered.map(mail => {
+                  const isInstant = mail.templateType === 'INSTANT_EMAIL_BROADCAST';
+                  const isWebinarLink = mail.templateType === 'WEBINAR_MEETING_LINK_BROADCAST';
+                  const isOnboarding = mail.templateType === 'USER_ONBOARDING';
+
+                  return (
+                    <div
+                      key={mail.id}
+                      onClick={() => setSelectedLogEmail(mail)}
+                      className={`p-3 border rounded-xl cursor-pointer text-left transition-all ${
+                        selectedLogEmail?.id === mail.id
+                          ? 'border-nexora-blue bg-nexora-blue/5 dark:bg-nexora-blue/10 shadow-xs'
+                          : 'border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] text-slate-500 font-mono truncate max-w-[170px]">
+                          To: {mail.to}
+                        </span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase ${
+                          isInstant
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                            : isWebinarLink
+                            ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/20'
+                            : isOnboarding
+                            ? 'bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/20'
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {isInstant ? '⚡ Instant' : isWebinarLink ? '📹 Webinar Link' : isOnboarding ? '👋 Welcome' : mail.templateType}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{mail.subject}</h4>
+                      <div className="flex items-center justify-between text-[9px] text-slate-400 mt-2">
+                        <span>{new Date(mail.sentAt).toLocaleDateString()}</span>
+                        <span>{new Date(mail.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
 

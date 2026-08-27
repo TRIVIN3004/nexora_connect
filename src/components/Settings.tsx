@@ -51,8 +51,8 @@ export const Settings: React.FC = () => {
     const saved = localStorage.getItem('nexora_note_moderation');
     return saved === 'false' ? false : true; // Default to true
   });
-  const [emailApiKey, setEmailApiKey] = useState(() => localStorage.getItem('nexora_email_api_key') || '');
-  const [emailFrom, setEmailFrom] = useState(() => localStorage.getItem('nexora_email_from') || 'onboarding@resend.dev');
+  const [emailApiKey, setEmailApiKey] = useState(() => localStorage.getItem('nexora_email_api_key') || (import.meta.env.VITE_RESEND_API_KEY as string) || '');
+  const [emailFrom, setEmailFrom] = useState(() => localStorage.getItem('nexora_email_from') || (import.meta.env.VITE_RESEND_FROM_EMAIL as string) || 'connect@mail.nexoratechs.xyz');
   const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem('nexora_supabase_url') || (import.meta.env.VITE_SUPABASE_URL as string) || '');
   const [supabaseAnonKey, setSupabaseAnonKey] = useState(() => localStorage.getItem('nexora_supabase_anon_key') || (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '');
   const [syncingStatus, setSyncingStatus] = useState<'idle' | 'testing' | 'syncing' | 'success' | 'error'>('idle');

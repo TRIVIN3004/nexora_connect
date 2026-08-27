@@ -27,7 +27,7 @@ export const InstantEmailModal: React.FC<InstantEmailModalProps> = ({
   defaultContent = '',
   defaultPriority = 'HIGH'
 }) => {
-  const { db, dispatcher, currentUser, triggerRefresh } = useApp();
+  const { db, dispatcher, currentUser, setCurrentTab, triggerRefresh } = useApp();
 
   const [subject, setSubject] = useState(defaultSubject);
   const [content, setContent] = useState(defaultContent);
@@ -344,9 +344,23 @@ export const InstantEmailModal: React.FC<InstantEmailModalProps> = ({
 
         {/* Modal Footer */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center">
-            <Users size={13} className="mr-1 text-slate-400" />
-            <span>Target: <strong>All {allUsers.length} staff members</strong></span>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2">
+            <div className="flex items-center">
+              <Users size={13} className="mr-1 text-slate-400" />
+              <span>Target: <strong>All {allUsers.length} staff members</strong></span>
+            </div>
+            {currentUser.role === 'ADMIN' && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  setCurrentTab('admin');
+                }}
+                className="text-[11px] text-nexora-blue dark:text-nexora-electric hover:underline font-semibold cursor-pointer"
+              >
+                • 📜 View Email History
+              </button>
+            )}
           </div>
 
           <div className="flex space-x-2.5">
