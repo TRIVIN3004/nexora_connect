@@ -57,6 +57,8 @@ export const Settings: React.FC = () => {
   const [supabaseAnonKey, setSupabaseAnonKey] = useState(() => localStorage.getItem('nexora_supabase_anon_key') || (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '');
   const [syncingStatus, setSyncingStatus] = useState<'idle' | 'testing' | 'syncing' | 'success' | 'error'>('idle');
   const [connectionResult, setConnectionResult] = useState<string>('');
+  const [emailTestStatus, setEmailTestStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [emailTestMsg, setEmailTestMsg] = useState<string>('');
 
   // Load preferences
   useEffect(() => {
@@ -199,6 +201,47 @@ export const Settings: React.FC = () => {
     } catch (e: any) {
       setSyncingStatus('error');
       setConnectionResult(`Sync failed: ${e.message || e}`);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    setEmailTestStatus('sending');
+    setEmailTestMsg('Dispatching test message through Resend API...');
+    try {
+      const fromAddr = emailFrom && !emailFrom.includes('@gmail.com') && !emailFrom.includes('onboarding@resend.dev')
+        ? emailFrom
+        : 'connect@mail.nexoratechs.xyz';
+
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: `Nexora Connect <${fromAddr}>`,
+          to: [currentUser.email],
+          reply_to: 'contactnexoratechs@gmail.com',
+          subject: '[🧪 Resend Test] Nexora Connect Mail Relay Verification',
+          html: `<div style="font-family:sans-serif;padding:20px;border-radius:8px;background:#F8FAFC;border:1px solid #E2E8F0;">
+            <h2 style="color:#0878C9;margin:0 0 10px 0;">Nexora Connect Mail Relay Live Test</h2>
+            <p>Your Resend email configuration is active and communicating properly!</p>
+            <p><strong>Recipient:</strong> ${currentUser.email}</p>
+            <p><strong>Sender Domain:</strong> ${fromAddr}</p>
+            <p style="font-size:11px;color:#94A3B8;margin-top:20px;">Sent via Nexora Connect Admin Panel.</p>
+          </div>`,
+          apiKey: emailApiKey
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.id) {
+        setEmailTestStatus('success');
+        setEmailTestMsg(`✅ Test email delivered to ${currentUser.email}! (Resend ID: ${data.id})`);
+      } else {
+        setEmailTestStatus('error');
+        setEmailTestMsg(`❌ Delivery error: ${data.error || data.message || JSON.stringify(data)}`);
+      }
+    } catch (err: any) {
+      setEmailTestStatus('error');
+      setEmailTestMsg(`❌ Network dispatch failed: ${err?.message || err}`);
     }
   };
 
@@ -512,6 +555,7 @@ export const Settings: React.FC = () => {
                           placeholder="re_xxxxxxxxxxxxxxxx"
                           className="w-full px-3 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white"
                         />
+                        <p className="text-[9px] text-slate-400 mt-1">Configured in production via <code className="text-nexora-blue font-mono">VITE_RESEND_API_KEY</code></p>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Sender Email ("From Address")</label>
@@ -519,9 +563,36 @@ export const Settings: React.FC = () => {
                           type="text"
                           value={emailFrom}
                           onChange={(e) => setEmailFrom(e.target.value)}
-                          placeholder="onboarding@resend.dev"
+                          placeholder="connect@mail.nexoratechs.xyz"
                           className="w-full px-3 py-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white"
                         />
+                        <p className="text-[9px] text-amber-500/90 mt-1">Verified sender domain: <strong>connect@mail.nexoratechs.xyz</strong></p>
+                      </div>
+
+                      {/* Live Test Email Button */}
+                      <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Test Connection</span>
+                          <button
+                            type="button"
+                            onClick={handleTestEmail}
+                            disabled={emailTestStatus === 'sending'}
+                            className="px-2.5 py-1 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {emailTestStatus === 'sending' ? 'Sending...' : '🧪 Send Test Email'}
+                          </button>
+                        </div>
+                        {emailTestMsg && (
+                          <div className={`p-2 rounded text-[10px] font-semibold leading-relaxed ${
+                            emailTestStatus === 'success' 
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : emailTestStatus === 'error'
+                              ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                              : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          }`}>
+                            {emailTestMsg}
+                          </div>
+                        )}
                       </div>
                     </>
                   )}

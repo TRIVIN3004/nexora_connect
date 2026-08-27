@@ -17,13 +17,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const resendKey = apiKey || process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
+    const { from, to, subject, html, reply_to, apiKey } = req.body || {};
+
+    const resendKey = (apiKey && apiKey.trim()) || process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
     if (!resendKey) {
-      return res.status(400).json({ error: 'Resend API Key is missing.' });
+      return res.status(400).json({ error: 'Resend API Key is missing. Please configure VITE_RESEND_API_KEY in your deployment.' });
     }
 
     let fromAddress = from || process.env.VITE_RESEND_FROM_EMAIL || 'connect@mail.nexoratechs.xyz';
-    if (!fromAddress || fromAddress.includes('onboarding@resend.dev') || fromAddress.includes('@gmail.com') || fromAddress.includes('@yahoo.com')) {
+    if (!fromAddress || fromAddress.includes('onboarding@resend.dev') || fromAddress.includes('@gmail.com') || fromAddress.includes('@yahoo.com') || fromAddress.includes('@outlook.com')) {
       fromAddress = 'connect@mail.nexoratechs.xyz';
     }
     const formattedFrom = fromAddress.includes('<') ? fromAddress : `Nexora Connect <${fromAddress}>`;
@@ -35,7 +37,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: fromAddress,
+        from: formattedFrom,
         to: Array.isArray(to) ? to : [to],
         reply_to: reply_to || 'contactnexoratechs@gmail.com',
         subject,

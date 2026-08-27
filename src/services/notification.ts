@@ -379,23 +379,19 @@ export class NotificationDispatcher {
     const summary = content.length > 120 ? content.slice(0, 117) + '...' : content;
 
     allUsers.forEach(user => {
-      this.notifyUser(
+      // 1. In-app notification
+      this.db.createNotification(user.email, `⚡ ${title}`, summary, 'ANNOUNCEMENT');
+
+      // 2. Direct real-time email dispatch
+      EmailService.sendInstantEmailToAll(
         user.email,
-        `⚡ ${title}`,
-        summary,
-        'ANNOUNCEMENT',
-        () => {
-          EmailService.sendInstantEmailToAll(
-            user.email,
-            user.name,
-            title,
-            content,
-            senderName,
-            priority,
-            actionUrl,
-            actionLabel
-          );
-        }
+        user.name,
+        title,
+        content,
+        senderName,
+        priority,
+        actionUrl,
+        actionLabel
       );
     });
   }
@@ -419,23 +415,19 @@ export class NotificationDispatcher {
       const existingUser = userMap.get(normalized);
       const recipientName = existingUser ? existingUser.name : normalized.split('@')[0];
 
-      this.notifyUser(
+      // 1. In-app notification
+      this.db.createNotification(normalized, `⚡ ${title}`, summary, 'ANNOUNCEMENT');
+
+      // 2. Direct real-time email dispatch
+      EmailService.sendInstantEmailToAll(
         normalized,
-        `⚡ ${title}`,
-        summary,
-        'ANNOUNCEMENT',
-        () => {
-          EmailService.sendInstantEmailToAll(
-            normalized,
-            recipientName,
-            title,
-            content,
-            senderName,
-            priority,
-            actionUrl,
-            actionLabel
-          );
-        }
+        recipientName,
+        title,
+        content,
+        senderName,
+        priority,
+        actionUrl,
+        actionLabel
       );
     });
   }
