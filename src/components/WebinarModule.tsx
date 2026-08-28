@@ -18,10 +18,14 @@ import {
   Zap,
   Mail,
   CheckCircle2,
-  Edit3
+  Edit3,
+  Users,
+  UserCheck,
+  Globe
 } from 'lucide-react';
 import type { Webinar } from '../services/database';
 import { InstantEmailModal } from './InstantEmailModal';
+import { PersonSelector } from './PersonSelector';
 
 export const WebinarModule: React.FC = () => {
   const { db, dispatcher, currentUser, triggerRefresh } = useApp();
@@ -35,6 +39,8 @@ export const WebinarModule: React.FC = () => {
   // Deletion & Action states
   const [webinarToDelete, setWebinarToDelete] = useState<Webinar | null>(null);
   const [broadcastLinkWebinar, setBroadcastLinkWebinar] = useState<Webinar | null>(null);
+  const [broadcastTargetMode, setBroadcastTargetMode] = useState<'ALL' | 'REGISTERED' | 'SELECTED'>('ALL');
+  const [broadcastSelectedEmails, setBroadcastSelectedEmails] = useState<string[]>([]);
   const [broadcastCustomNote, setBroadcastCustomNote] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -186,17 +192,48 @@ export const WebinarModule: React.FC = () => {
     setIsBroadcasting(true);
 
     try {
-      dispatcher.dispatchWebinarLinkToAllEmployees(
+      let targetEmails: string[] = [];
+      let isAll = false;
+
+      if (broadcastTargetMode === 'ALL') {
+        isAll = true;
+        targetEmails = allUsers.map(u => u.email);
+      } else if (broadcastTargetMode === 'REGISTERED') {
+        const webinarRegs = registrations.filter(r => r.webinarId === broadcastLinkWebinar.id);
+        targetEmails = webinarRegs.map(r => r.userId);
+        if (targetEmails.length === 0) {
+          alert('No attendees are registered for this webinar yet.');
+          setIsBroadcasting(false);
+          return;
+        }
+      } else {
+        if (broadcastSelectedEmails.includes('all')) {
+          isAll = true;
+          targetEmails = allUsers.map(u => u.email);
+        } else {
+          targetEmails = broadcastSelectedEmails;
+        }
+
+        if (targetEmails.length === 0) {
+          alert('Please select at least one person to send the meeting link to.');
+          setIsBroadcasting(false);
+          return;
+        }
+      }
+
+      dispatcher.dispatchWebinarLinkToTargets(
         broadcastLinkWebinar.id,
+        targetEmails,
         currentUser.name,
-        broadcastCustomNote.trim() || undefined
+        broadcastCustomNote.trim() || undefined,
+        isAll
       );
 
       // Audit log
       db.createAuditLog(
         currentUser.email,
         currentUser.name,
-        'WEBINAR_LINK_BROADCAST_TO_ALL',
+        'WEBINAR_LINK_BROADCAST',
         'Webinar',
         broadcastLinkWebinar.id
       );
@@ -204,9 +241,11 @@ export const WebinarModule: React.FC = () => {
       triggerRefresh();
       setIsBroadcasting(false);
       const title = broadcastLinkWebinar.title;
+      const count = isAll ? allUsers.length : targetEmails.length;
       setBroadcastLinkWebinar(null);
       setBroadcastCustomNote('');
-      showToast(`Meeting link for "${title}" successfully emailed and notified to ALL ${allUsers.length} employees!`);
+      setBroadcastSelectedEmails([]);
+      showToast(`Meeting link for "${title}" successfully emailed and notified to ${count} recipient(s)!`);
     } catch (e) {
       console.error('Broadcast webinar link failed:', e);
       setIsBroadcasting(false);
@@ -518,17 +557,20 @@ export const WebinarModule: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Broadcast meeting link to all employees quick button */}
+                  {/* Send meeting link button */}
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2.5">
                     
-                    {/* Send link to all button */}
                     <button
-                      onClick={() => setBroadcastLinkWebinar(web)}
-                      className="w-full py-1.5 px-2.5 rounded-lg border border-sky-200 dark:border-sky-850 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-nexora-blue dark:text-sky-400 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all"
-                      title="Email webinar meeting link directly to all company employees"
+                      onClick={() => {
+                        setBroadcastLinkWebinar(web);
+                        setBroadcastTargetMode('ALL');
+                        setBroadcastSelectedEmails([]);
+                      }}
+                      className="w-full py-1.5 px-2.5 rounded-lg border border-sky-200 dark:border-sky-850 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-nexora-blue dark:text-sky-400 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer hover:border-sky-300 active:scale-98"
+                      title="Send meeting link via email to all staff or select specific persons"
                     >
                       <Mail size={13} />
-                      <span>📧 Send Link to All Staff ({allUsers.length})</span>
+                      <span>📧 Send Link via Email (All or Selected)</span>
                     </button>
 
                     {/* Actions Row */}
@@ -809,6 +851,19 @@ export const WebinarModule: React.FC = () => {
                       </button>
                     )}
 
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBroadcastLinkWebinar(selectedWebinar);
+                        setBroadcastTargetMode('ALL');
+                        setBroadcastSelectedEmails([]);
+                      }}
+                      className="px-3.5 py-2 border border-sky-200 dark:border-sky-850 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-nexora-blue dark:text-sky-400 rounded-lg text-xs font-semibold flex items-center transition-colors cursor-pointer"
+                      title="Email meeting link to all staff or select specific persons"
+                    >
+                      <Mail size={13} className="mr-1.5" /> Send Link via Email
+                    </button>
+
                     <a
                       href={selectedWebinar.url}
                       target="_blank"
@@ -871,92 +926,194 @@ export const WebinarModule: React.FC = () => {
       )}
 
       {/* ====================================================
-          BROADCAST MEETING LINK TO ALL EMPLOYEES MODAL
+          BROADCAST MEETING LINK (ALL OR SELECTED PERSONS) MODAL
           ==================================================== */}
-      {broadcastLinkWebinar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-scale-in">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-sky-100 dark:bg-sky-950/50 rounded-xl text-nexora-blue">
-                  <Mail size={22} />
+      {broadcastLinkWebinar && (() => {
+        const regCount = registrations.filter(r => r.webinarId === broadcastLinkWebinar.id).length;
+        const recipientCount = 
+          broadcastTargetMode === 'ALL' 
+            ? allUsers.length 
+            : broadcastTargetMode === 'REGISTERED' 
+              ? regCount 
+              : broadcastSelectedEmails.includes('all') 
+                ? allUsers.length 
+                : broadcastSelectedEmails.length;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 animate-scale-in max-h-[90vh] overflow-y-auto">
+              
+              <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-sky-100 dark:bg-sky-950/50 rounded-xl text-nexora-blue">
+                    <Mail size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-slate-900 dark:text-white">
+                      Send Meeting Link via Email
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Email meeting link directly to all staff, registered attendees, or particular selected persons.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-heading font-bold text-base text-slate-900 dark:text-white">
-                    Send Meeting Link to ALL Employees
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Broadcast meeting invitation directly to all {allUsers.length} staff members.
-                  </p>
+                <button
+                  onClick={() => setBroadcastLinkWebinar(null)}
+                  className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Webinar Summary Card */}
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                  {broadcastLinkWebinar.title}
+                </p>
+                <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 space-x-3">
+                  <span>📅 {broadcastLinkWebinar.date} at {broadcastLinkWebinar.startTime}</span>
+                  <span>📹 {broadcastLinkWebinar.platform}</span>
+                  <span>👥 {regCount} Registered</span>
                 </div>
+                <p className="text-[11px] text-nexora-blue font-mono truncate">
+                  Link: {broadcastLinkWebinar.url}
+                </p>
               </div>
-              <button
-                onClick={() => setBroadcastLinkWebinar(null)}
-                className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X size={16} />
-              </button>
-            </div>
 
-            {/* Webinar Summary Card */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5">
-              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                {broadcastLinkWebinar.title}
-              </p>
-              <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 space-x-3">
-                <span>📅 {broadcastLinkWebinar.date} at {broadcastLinkWebinar.startTime}</span>
-                <span>📹 {broadcastLinkWebinar.platform}</span>
-              </div>
-              <p className="text-[11px] text-nexora-blue font-mono truncate">
-                Link: {broadcastLinkWebinar.url}
-              </p>
-            </div>
+              {/* Target Audience Selector */}
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Select Target Recipients
+                </label>
 
-            {/* Optional Custom Note */}
-            <div>
-              <label className="text-[11px] font-bold text-slate-400 uppercase block mb-1">
-                Optional Message / Announcement Note
-              </label>
-              <textarea
-                rows={3}
-                value={broadcastCustomNote}
-                onChange={(e) => setBroadcastCustomNote(e.target.value)}
-                placeholder="e.g. The live masterclass will begin shortly. Please click the link to join the session on time!"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-nexora-blue"
-              />
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastTargetMode('ALL')}
+                    className={`p-3 rounded-xl border text-left flex items-start space-x-2.5 transition-all cursor-pointer ${
+                      broadcastTargetMode === 'ALL'
+                        ? 'border-nexora-blue bg-nexora-blue/5 dark:bg-nexora-blue/10 ring-1 ring-nexora-blue text-slate-900 dark:text-white'
+                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Globe size={16} className={`mt-0.5 shrink-0 ${broadcastTargetMode === 'ALL' ? 'text-nexora-blue' : 'text-slate-400'}`} />
+                    <div>
+                      <div className="text-xs font-bold">All Company Staff</div>
+                      <div className="text-[10px] text-slate-400">{allUsers.length} total members</div>
+                    </div>
+                  </button>
 
-            {/* Modal Actions */}
-            <div className="pt-2 flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => setBroadcastLinkWebinar(null)}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isBroadcasting}
-                onClick={handleBroadcastMeetingLink}
-                className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {isBroadcasting ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
-                    <span>Broadcasting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send size={13} />
-                    <span>Send to All {allUsers.length} Persons</span>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastTargetMode('REGISTERED')}
+                    className={`p-3 rounded-xl border text-left flex items-start space-x-2.5 transition-all cursor-pointer ${
+                      broadcastTargetMode === 'REGISTERED'
+                        ? 'border-nexora-blue bg-nexora-blue/5 dark:bg-nexora-blue/10 ring-1 ring-nexora-blue text-slate-900 dark:text-white'
+                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Users size={16} className={`mt-0.5 shrink-0 ${broadcastTargetMode === 'REGISTERED' ? 'text-nexora-blue' : 'text-slate-400'}`} />
+                    <div>
+                      <div className="text-xs font-bold">Registered Attendees</div>
+                      <div className="text-[10px] text-slate-400">{regCount} confirmed seats</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastTargetMode('SELECTED')}
+                    className={`p-3 rounded-xl border text-left flex items-start space-x-2.5 transition-all cursor-pointer ${
+                      broadcastTargetMode === 'SELECTED'
+                        ? 'border-nexora-blue bg-nexora-blue/5 dark:bg-nexora-blue/10 ring-1 ring-nexora-blue text-slate-900 dark:text-white'
+                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <UserCheck size={16} className={`mt-0.5 shrink-0 ${broadcastTargetMode === 'SELECTED' ? 'text-nexora-blue' : 'text-slate-400'}`} />
+                    <div>
+                      <div className="text-xs font-bold">Selected Persons</div>
+                      <div className="text-[10px] text-slate-400">
+                        {broadcastSelectedEmails.includes('all') ? 'All' : `${broadcastSelectedEmails.length} selected`}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* If "SELECTED" mode is picked, show full PersonSelector */}
+                {broadcastTargetMode === 'SELECTED' && (
+                  <div className="pt-2">
+                    <PersonSelector
+                      selectedEmails={broadcastSelectedEmails}
+                      onChange={setBroadcastSelectedEmails}
+                      targetMode="SPECIFIC"
+                      onTargetModeChange={(m) => {
+                        if (m === 'ALL') {
+                          setBroadcastTargetMode('ALL');
+                        }
+                      }}
+                      themeColor="blue"
+                      allOptionLabel="Select All Company Members"
+                      specificOptionLabel="Select Specific Person(s)"
+                      allOptionDescription="Broadcast meeting link to all registered employees"
+                      specificOptionDescription="Pick specific individual team members or custom attendees"
+                      maxListHeight="max-h-48"
+                    />
+                  </div>
                 )}
-              </button>
+              </div>
+
+              {/* Optional Custom Note */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-400 uppercase block mb-1">
+                  Optional Message / Host Note
+                </label>
+                <textarea
+                  rows={2}
+                  value={broadcastCustomNote}
+                  onChange={(e) => setBroadcastCustomNote(e.target.value)}
+                  placeholder="e.g. The live session will begin in 10 minutes. Please click the meeting link to join on time!"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-nexora-blue"
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="pt-2 flex items-center justify-between">
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Will email: <strong className="text-nexora-blue dark:text-sky-400">{recipientCount} recipient(s)</strong>
+                </div>
+
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastLinkWebinar(null)}
+                    className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBroadcasting || (broadcastTargetMode === 'SELECTED' && broadcastSelectedEmails.length === 0)}
+                    onClick={handleBroadcastMeetingLink}
+                    className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold shadow-md active:scale-95 transition-all flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isBroadcasting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={13} />
+                        <span>Send to {recipientCount} Person(s)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ====================================================
           SCHEDULER / CREATE & EDIT DIALOG

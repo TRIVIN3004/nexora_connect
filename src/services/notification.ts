@@ -455,19 +455,29 @@ export class NotificationDispatcher {
     });
   }
 
-  // 10. Broadcast Webinar Meeting Link to ALL Employees (All Persons)
-  dispatchWebinarLinkToAllEmployees(webinarId: string, senderName: string = 'Nexora Administrator', customNote?: string) {
+  // 10. Broadcast Webinar Meeting Link to Targets (All Employees or Selected Persons)
+  dispatchWebinarLinkToTargets(
+    webinarId: string,
+    targetEmails: string[],
+    senderName: string = 'Nexora Administrator',
+    customNote?: string,
+    isAll?: boolean
+  ) {
     const webinar = this.db.getWebinars().find(w => w.id === webinarId);
     if (!webinar) return;
 
-    const allUsers = this.db.getUsers();
+    const isAllStaff = isAll || targetEmails.includes('all');
+    const targetUsers = isAllStaff
+      ? this.db.getUsers()
+      : targetEmails.map(email => this.db.getUser(email) || { email, name: email.split('@')[0] });
+
     const dateTimeStr = `${webinar.date} at ${webinar.startTime}`;
 
-    allUsers.forEach(user => {
+    targetUsers.forEach(user => {
       this.notifyUser(
         user.email,
-        `📢 Webinar Link: ${webinar.title}`,
-        `Live Webinar link for "${webinar.title}" (${webinar.platform}) on ${dateTimeStr}. Click to join!`,
+        `📢 Meeting Link: ${webinar.title}`,
+        `Meeting link for "${webinar.title}" (${webinar.platform}) on ${dateTimeStr}. Click to join!`,
         'WEBINAR_REMINDER',
         () => {
           EmailService.sendWebinarMeetingLinkBroadcast(
@@ -486,6 +496,11 @@ export class NotificationDispatcher {
         }
       );
     });
+  }
+
+  // 10b. Legacy method for broadcasting to all
+  dispatchWebinarLinkToAllEmployees(webinarId: string, senderName: string = 'Nexora Administrator', customNote?: string) {
+    this.dispatchWebinarLinkToTargets(webinarId, ['all'], senderName, customNote, true);
   }
 
   // 11. Instant Sudden Email Broadcast to ALL Employees
