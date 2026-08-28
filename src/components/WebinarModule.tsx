@@ -104,27 +104,61 @@ export const WebinarModule: React.FC = () => {
     return `Starts in ${minutes} minutes`;
   };
 
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+
   const handleRegister = (webinarId: string) => {
+    const targetWeb = db.getWebinars().find(w => w.id === webinarId);
+    if (targetWeb?.status === 'COMPLETED' || targetWeb?.status === 'CANCELLED') {
+      showToast('⚠️ This session has finished. Registrations are closed.');
+      return;
+    }
+
     const userEmail = (currentUser.email || '').trim().toLowerCase();
     const isRegistered = registrations.some(
       r => r.webinarId === webinarId && (r.userId || '').trim().toLowerCase() === userEmail
     );
 
     if (isRegistered) {
-      db.unregisterForWebinar(webinarId, userEmail);
-      showToast('You have unregistered from this webinar.');
-    } else {
-      db.registerForWebinar(webinarId, userEmail);
-      // Dispatch confirmation
-      dispatcher.dispatchWebinarRegistration(currentUser.email, webinarId);
-      showToast('Registration confirmed! Check your in-app notifications and email for details.');
+      showToast('✅ You are already registered for this session. Your seat is confirmed.');
+      return;
     }
-    triggerRefresh();
+
+    if (registeringId === webinarId) return;
+    setRegisteringId(webinarId);
+
+    try {
+      db.registerForWebinar(webinarId, userEmail);
+      // Dispatch confirmation email & in-app alert once
+      dispatcher.dispatchWebinarRegistration(currentUser.email, webinarId);
+      showToast('🎉 Registration confirmed! Confirmation email dispatched to your inbox.');
+      triggerRefresh();
+    } catch (err: any) {
+      showToast(`❌ Registration error: ${err.message || 'Failed'}`);
+    } finally {
+      setTimeout(() => {
+        setRegisteringId(null);
+      }, 500);
+    }
 
     // Sync current drawer detail
     if (selectedWebinar && selectedWebinar.id === webinarId) {
       const updated = db.getWebinars().find(w => w.id === webinarId);
       if (updated) setSelectedWebinar(updated);
+    }
+  };
+
+  const handleFinishWebinar = (webinarId: string) => {
+    const targetWeb = db.getWebinars().find(w => w.id === webinarId);
+    if (!targetWeb) return;
+
+    if (window.confirm(`Mark meeting "${targetWeb.title}" as Finished? Registrations will be permanently closed.`)) {
+      const updated: Webinar = { ...targetWeb, status: 'COMPLETED' };
+      db.updateWebinar(updated, currentUser.email, currentUser.name);
+      if (selectedWebinar && selectedWebinar.id === webinarId) {
+        setSelectedWebinar(updated);
+      }
+      triggerRefresh();
+      showToast(`🏁 Meeting "${targetWeb.title}" has been marked as Finished.`);
     }
   };
 
@@ -498,34 +532,51 @@ export const WebinarModule: React.FC = () => {
                     </button>
 
                     {/* Actions Row */}
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => setSelectedWebinar(web)}
-                        className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center"
-                      >
-                        Details <ChevronRight size={14} className="ml-0.5" />
-                      </button>
-
-                      {web.status !== 'COMPLETED' && web.status !== 'CANCELLED' ? (
+                    <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-slate-100 dark:border-slate-850">
+                      <div className="flex items-center space-x-1.5">
                         <button
-                          onClick={() => handleRegister(web.id)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center transition-all duration-150 active:scale-95 cursor-pointer ${
-                            isRegistered
-                              ? 'bg-green-500/15 text-green-700 dark:text-green-300 border border-green-500/30 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/30'
-                              : 'bg-nexora-blue hover:bg-nexora-blue/90 text-white shadow-sm'
-                          }`}
-                          title={isRegistered ? 'Click to unregister' : 'Register for this webinar'}
+                          onClick={() => setSelectedWebinar(web)}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center"
                         >
-                          {isRegistered ? (
-                            <><Check size={12} className="mr-1 text-green-500" /> Registered ✓</>
-                          ) : (
-                            'Register Now'
-                          )}
+                          Details <ChevronRight size={14} className="ml-0.5" />
                         </button>
-                      ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                          {web.status === 'COMPLETED' ? 'Session Completed' : 'Cancelled'}
+
+                        {currentUser.role === 'ADMIN' && web.status !== 'COMPLETED' && web.status !== 'CANCELLED' && (
+                          <button
+                            onClick={() => handleFinishWebinar(web.id)}
+                            className="px-2 py-0.5 bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white rounded text-[10px] font-bold flex items-center transition-colors cursor-pointer"
+                            title="Mark this session as Finished / Completed"
+                          >
+                            🏁 End Meeting
+                          </button>
+                        )}
+                      </div>
+
+                      {web.status === 'COMPLETED' ? (
+                        <div className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 flex items-center cursor-not-allowed">
+                          <CheckCircle2 size={12} className="mr-1 text-slate-400" />
+                          Meeting Finished (Closed)
+                        </div>
+                      ) : web.status === 'CANCELLED' ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+                          Cancelled
                         </span>
+                      ) : isRegistered ? (
+                        <div 
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center cursor-default shadow-xs" 
+                          title="Your seat is confirmed"
+                        >
+                          <Check size={13} className="mr-1 text-emerald-500 stroke-[3]" />
+                          Registered ✓
+                        </div>
+                      ) : (
+                        <button
+                          disabled={registeringId === web.id}
+                          onClick={() => handleRegister(web.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-nexora-blue hover:bg-nexora-blue/90 text-white shadow-sm flex items-center transition-all duration-150 active:scale-95 cursor-pointer disabled:opacity-50"
+                        >
+                          {registeringId === web.id ? 'Confirming...' : 'Register Now'}
+                        </button>
                       )}
                     </div>
                   </div>
@@ -699,7 +750,7 @@ export const WebinarModule: React.FC = () => {
             {/* Drawer Actions Footer */}
             <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               
-              {/* Left: Admin Actions (Edit & Delete) */}
+              {/* Left: Admin Actions (Edit, Mark Finished & Delete) */}
               {currentUser.role === 'ADMIN' ? (
                 <div className="flex items-center space-x-2">
                   <button
@@ -708,6 +759,17 @@ export const WebinarModule: React.FC = () => {
                   >
                     <Edit3 size={13} className="mr-1.5" /> Edit
                   </button>
+
+                  {selectedWebinar.status !== 'COMPLETED' && selectedWebinar.status !== 'CANCELLED' && (
+                    <button
+                      onClick={() => handleFinishWebinar(selectedWebinar.id)}
+                      className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white rounded-lg text-xs font-bold flex items-center transition-colors cursor-pointer"
+                      title="Mark session as Completed / Finished"
+                    >
+                      🏁 End Meeting
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setWebinarToDelete(selectedWebinar)}
                     className="px-3 py-2 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold flex items-center"
@@ -718,37 +780,44 @@ export const WebinarModule: React.FC = () => {
               ) : <div />}
 
               {/* Right: Registration / Launch Actions */}
-              <div className="flex space-x-2">
-                {selectedWebinar.status !== 'COMPLETED' && selectedWebinar.status !== 'CANCELLED' ? (
+              <div className="flex items-center space-x-2">
+                {selectedWebinar.status === 'COMPLETED' ? (
+                  <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center">
+                    <CheckCircle2 size={13} className="mr-1.5 text-slate-400" />
+                    Session Finished (Registration Closed)
+                  </span>
+                ) : selectedWebinar.status === 'CANCELLED' ? (
+                  <span className="text-xs font-bold text-red-400 uppercase tracking-widest px-4 py-2">
+                    Cancelled
+                  </span>
+                ) : (
                   <>
-                    <button
-                      onClick={() => handleRegister(selectedWebinar.id)}
-                      className={`px-4 py-2 text-xs font-semibold rounded-lg border ${
-                        registrations.some(
-                          r => r.webinarId === selectedWebinar.id && (r.userId || '').trim().toLowerCase() === (currentUser.email || '').trim().toLowerCase()
-                        )
-                          ? 'border-green-500/30 bg-green-500/15 text-green-700 dark:text-green-300'
-                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      {registrations.some(
-                        r => r.webinarId === selectedWebinar.id && (r.userId || '').trim().toLowerCase() === (currentUser.email || '').trim().toLowerCase()
-                      ) ? 'Registered ✓' : 'Register'}
-                    </button>
+                    {registrations.some(
+                      r => r.webinarId === selectedWebinar.id && (r.userId || '').trim().toLowerCase() === (currentUser.email || '').trim().toLowerCase()
+                    ) ? (
+                      <div className="px-4 py-2 text-xs font-bold rounded-lg border border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 flex items-center cursor-default">
+                        <Check size={13} className="mr-1.5 text-emerald-500 stroke-[3]" />
+                        Registered ✓ (Seat Confirmed)
+                      </div>
+                    ) : (
+                      <button
+                        disabled={registeringId === selectedWebinar.id}
+                        onClick={() => handleRegister(selectedWebinar.id)}
+                        className="px-4 py-2 text-xs font-semibold rounded-lg bg-nexora-blue hover:bg-nexora-blue/90 text-white shadow-sm disabled:opacity-50 cursor-pointer"
+                      >
+                        {registeringId === selectedWebinar.id ? 'Registering...' : 'Register'}
+                      </button>
+                    )}
 
                     <a
                       href={selectedWebinar.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-4 py-2 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-semibold flex items-center shadow-md active:scale-95 transition-all duration-150"
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold flex items-center shadow-md active:scale-95 transition-all duration-150"
                     >
-                      Join Webinar <ExternalLink size={12} className="ml-1" />
+                      Join Session <ExternalLink size={12} className="ml-1" />
                     </a>
                   </>
-                ) : (
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-2">
-                    {selectedWebinar.status === 'COMPLETED' ? 'Session Over' : 'Cancelled'}
-                  </span>
                 )}
               </div>
 

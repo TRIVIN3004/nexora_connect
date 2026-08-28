@@ -19,7 +19,7 @@ import {
 import { BroadcastModal } from './BroadcastModal';
 
 export const Dashboard: React.FC = () => {
-  const { db, currentUser, setCurrentTab, triggerRefresh } = useApp();
+  const { db, dispatcher, currentUser, setCurrentTab, triggerRefresh } = useApp();
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -421,21 +421,22 @@ export const Dashboard: React.FC = () => {
                         </div>
                         <div className="mt-4 flex items-center justify-between">
                           <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{web.date}</span>
-                          {registered ? (
-                            <button
-                              onClick={() => {
-                                db.unregisterForWebinar(web.id, currentUser.email);
-                                triggerRefresh();
-                              }}
-                              className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center bg-green-500/10 hover:bg-red-500/10 hover:text-red-600 px-2 py-0.5 rounded-full border border-green-500/20 transition-colors"
-                              title="Click to unregister"
+                          {web.status === 'COMPLETED' ? (
+                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                              Finished
+                            </span>
+                          ) : registered ? (
+                            <span 
+                              className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30 cursor-default"
+                              title="Your seat is confirmed"
                             >
                               Registered ✓
-                            </button>
+                            </span>
                           ) : (
                             <button
                               onClick={() => {
                                 db.registerForWebinar(web.id, currentUser.email);
+                                dispatcher.dispatchWebinarRegistration(currentUser.email, web.id);
                                 triggerRefresh();
                               }}
                               className="px-2.5 py-1 bg-nexora-blue text-white rounded text-[10px] font-bold hover:bg-nexora-blue/80 active:scale-95 cursor-pointer"

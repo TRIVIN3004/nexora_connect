@@ -17,7 +17,9 @@ import {
   UserPlus,
   Trash2,
   Pin,
-  Zap
+  Zap,
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import type { User, KnowledgeNote } from '../services/database';
 import { EmailService } from '../services/email';
@@ -28,11 +30,13 @@ import { InstantEmailModal } from './InstantEmailModal';
 export const AdminPanel: React.FC = () => {
   const { db, currentUser, triggerRefresh, setCurrentTab } = useApp();
 
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'users' | 'broadcasts' | 'moderation' | 'audit' | 'emails'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'sessions' | 'broadcasts' | 'users' | 'moderation' | 'emails' | 'audit'>('analytics');
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
   const [instantEmailInitialTargets, setInstantEmailInitialTargets] = useState<string[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [sessionSearchQuery, setSessionSearchQuery] = useState('');
+  const [sessionStatusFilter, setSessionStatusFilter] = useState<'ALL' | 'UPCOMING' | 'LIVE' | 'COMPLETED'>('ALL');
   const [emailFilterQuery, setEmailFilterQuery] = useState('');
   const [emailCategoryFilter, setEmailCategoryFilter] = useState<'ALL' | 'INSTANT' | 'WEBINAR' | 'ONBOARDING' | 'BROADCAST'>('ALL');
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -46,12 +50,43 @@ export const AdminPanel: React.FC = () => {
   const allUsers = db.getUsers();
   const allWebinars = db.getWebinars();
   const allMeetings = db.getMeetings();
+  const allRegistrations = db.getWebinarRegistrations();
   const allTickets = db.getTickets();
   const allNotes = db.getKnowledgeNotes();
   const allBroadcasts = db.getCompanyMessages();
   const auditLogs = db.getAuditLogs();
   const emailLogs = EmailService.getSentEmailsList();
   const feedbacks = db.getFeedbacks();
+
+  // Handlers for Sessions
+  const handleAdminFinishSession = (webinarId: string, title: string) => {
+    const web = allWebinars.find(w => w.id === webinarId);
+    if (!web) return;
+    if (window.confirm(`Mark session "${title}" as Finished/Completed? Registrations will be locked across the system.`)) {
+      db.updateWebinar({ ...web, status: 'COMPLETED' }, currentUser.email, currentUser.name);
+      db.createAuditLog(currentUser.email, currentUser.name, 'FINISH_WEBINAR_SESSION', 'Webinar', webinarId);
+      triggerRefresh();
+      setDeleteSuccessBanner(`Session "${title}" has been marked as Finished. Registrations are closed.`);
+      setTimeout(() => setDeleteSuccessBanner(null), 5000);
+    }
+  };
+
+  const handleAdminReopenSession = (webinarId: string, title: string) => {
+    const web = allWebinars.find(w => w.id === webinarId);
+    if (!web) return;
+    if (window.confirm(`Reopen session "${title}"? Registrations will become active again.`)) {
+      db.updateWebinar({ ...web, status: 'UPCOMING' }, currentUser.email, currentUser.name);
+      db.createAuditLog(currentUser.email, currentUser.name, 'REOPEN_WEBINAR_SESSION', 'Webinar', webinarId);
+      triggerRefresh();
+    }
+  };
+
+  const handleAdminDeleteSession = (webinarId: string, title: string) => {
+    if (window.confirm(`Permanently delete webinar "${title}"?`)) {
+      db.deleteWebinar(webinarId, currentUser.email, currentUser.name);
+      triggerRefresh();
+    }
+  };
 
   // 1. Calculations
   const pendingNotes = allNotes.filter(n => n.status === 'PENDING_APPROVAL');
@@ -144,6 +179,7 @@ export const AdminPanel: React.FC = () => {
       <div className="border-b border-slate-200 dark:border-dark-border flex flex-wrap gap-1.5 pb-px">
         {[
           { id: 'analytics', name: 'Dashboard Analytics', icon: Users },
+          { id: 'sessions', name: 'Meetings & Webinars', icon: Calendar, badge: allWebinars.filter(w => w.status !== 'COMPLETED').length },
           { id: 'broadcasts', name: 'Company Broadcasts', icon: Megaphone, badge: allBroadcasts.length },
           { id: 'users', name: 'User Directory', icon: Users },
           { id: 'moderation', name: 'Approvals Queue', icon: ShieldAlert, badge: pendingNotes.length },
@@ -201,6 +237,213 @@ export const AdminPanel: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ====================================================
+          SUB-TAB: MEETINGS & WEBINARS CONTROL (FINISH / REGISTRATION LOCK)
+          ==================================================== */}
+      {activeSubTab === 'sessions' && (
+        <div className="space-y-6">
+          
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-slate-200 dark:border-dark-border">
+              <span className="text-xs text-slate-400 font-bold uppercase">Total Sessions</span>
+              <div className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">{allWebinars.length}</div>
+            </div>
+            <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-slate-200 dark:border-dark-border">
+              <span className="text-xs text-emerald-500 font-bold uppercase">Active / Upcoming</span>
+              <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+                {allWebinars.filter(w => w.status !== 'COMPLETED' && w.status !== 'CANCELLED').length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-slate-200 dark:border-dark-border">
+              <span className="text-xs text-slate-500 font-bold uppercase">Finished Sessions</span>
+              <div className="text-2xl font-extrabold text-slate-700 dark:text-slate-300 mt-1">
+                {allWebinars.filter(w => w.status === 'COMPLETED').length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-dark-card p-4 rounded-xl border border-slate-200 dark:border-dark-border">
+              <span className="text-xs text-sky-500 font-bold uppercase">Total Registrations</span>
+              <div className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 mt-1">
+                {allRegistrations.length}
+              </div>
+            </div>
+          </div>
+
+          {/* Session Management Table Card */}
+          <div className="bg-white dark:bg-dark-card rounded-xl border border-slate-200 dark:border-dark-border premium-shadow overflow-hidden p-5 space-y-4">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center">
+                  <Calendar size={14} className="mr-2 text-nexora-blue" />
+                  Sessions & Meeting Status Oversight ({allWebinars.length})
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  When a session is marked as <strong>Finished</strong>, registration buttons are immediately locked across the entire platform.
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentTab('webinars')}
+                  className="px-3.5 py-1.5 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer"
+                >
+                  <PlusCircle size={13} />
+                  <span>Go to Webinar Hub</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={sessionSearchQuery}
+                  onChange={e => setSessionSearchQuery(e.target.value)}
+                  placeholder="Search sessions by topic, speaker, category..."
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-nexora-blue"
+                />
+              </div>
+
+              <div className="flex items-center space-x-1 border border-slate-200 dark:border-slate-700 rounded-lg p-1 bg-slate-50 dark:bg-slate-900/30">
+                {(['ALL', 'UPCOMING', 'LIVE', 'COMPLETED'] as const).map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setSessionStatusFilter(st)}
+                    className={`px-2.5 py-1 text-[10px] font-bold rounded cursor-pointer transition-colors ${
+                      sessionStatusFilter === st
+                        ? 'bg-nexora-blue text-white shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {st === 'COMPLETED' ? 'FINISHED' : st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sessions Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/15 text-slate-400 uppercase font-bold text-[10px]">
+                    <th className="p-3">Session & Category</th>
+                    <th className="p-3">Speaker & Host</th>
+                    <th className="p-3">Scheduled Date & Time</th>
+                    <th className="p-3">Attendees Registered</th>
+                    <th className="p-3">Current Status</th>
+                    <th className="p-3 text-right">Admin Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+                  {allWebinars
+                    .filter(w => {
+                      if (sessionStatusFilter !== 'ALL' && w.status !== sessionStatusFilter) return false;
+                      if (!sessionSearchQuery.trim()) return true;
+                      const q = sessionSearchQuery.toLowerCase();
+                      return w.title.toLowerCase().includes(q) ||
+                             w.speaker.toLowerCase().includes(q) ||
+                             w.category.toLowerCase().includes(q);
+                    })
+                    .map(web => {
+                      const regCount = allRegistrations.filter(r => r.webinarId === web.id).length;
+                      const isFinished = web.status === 'COMPLETED';
+                      return (
+                        <tr key={web.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10">
+                          
+                          <td className="p-3 max-w-xs">
+                            <div className="font-bold text-slate-900 dark:text-white line-clamp-1">{web.title}</div>
+                            <span className="text-[10px] text-nexora-blue dark:text-nexora-electric uppercase font-bold tracking-wider">
+                              {web.category}
+                            </span>
+                          </td>
+
+                          <td className="p-3 text-slate-600 dark:text-slate-300">
+                            <div className="font-semibold">{web.speaker}</div>
+                            <div className="text-[10px] text-slate-400">Keynote Speaker</div>
+                          </td>
+
+                          <td className="p-3 text-slate-600 dark:text-slate-300">
+                            <div className="font-semibold">{web.date}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{web.startTime} ({web.duration})</div>
+                          </td>
+
+                          <td className="p-3">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-extrabold text-slate-800 dark:text-slate-100">{regCount}</span>
+                              <span className="text-[10px] text-slate-400">/ {web.maxParticipants} cap</span>
+                            </div>
+                          </td>
+
+                          <td className="p-3">
+                            {isFinished ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                                <CheckCircle2 size={10} className="mr-1 text-slate-400" />
+                                Finished (Locked)
+                              </span>
+                            ) : web.status === 'LIVE' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1 animate-ping" />
+                                Live Now
+                              </span>
+                            ) : web.status === 'CANCELLED' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500/10 text-red-500">
+                                Cancelled
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
+                                Upcoming
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end space-x-1.5">
+                              
+                              {!isFinished ? (
+                                <button
+                                  onClick={() => handleAdminFinishSession(web.id, web.title)}
+                                  className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1 shadow-xs transition-all cursor-pointer"
+                                  title="Mark session as Finished (Locks all registration buttons)"
+                                >
+                                  <span>🏁 Finish Meeting</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleAdminReopenSession(web.id, web.title)}
+                                  className="px-2.5 py-1 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-bold flex items-center space-x-1 transition-colors cursor-pointer"
+                                  title="Reopen registration for this session"
+                                >
+                                  <RefreshCw size={11} />
+                                  <span>Reopen</span>
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => handleAdminDeleteSession(web.id, web.title)}
+                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-400 hover:text-red-500 rounded transition-colors"
+                                title="Delete session"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+
+                            </div>
+                          </td>
+
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
         </div>
       )}
 

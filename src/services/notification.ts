@@ -55,8 +55,8 @@ export class NotificationDispatcher {
     }
   }
 
-  // 2. Meeting Creation Invitation
-  dispatchMeetingInvitation(meetingId: string) {
+  // 2. Meeting Creation Invitation (to all or selected participants)
+  dispatchMeetingInvitation(meetingId: string, customParticipantEmails?: string[]) {
     const meetings = this.db.getMeetings();
     const meeting = meetings.find(m => m.id === meetingId);
     if (!meeting) return;
@@ -64,26 +64,68 @@ export class NotificationDispatcher {
     const organizer = this.db.getUser(meeting.organizerId) || { name: meeting.organizerId };
     const dateTimeStr = `${meeting.date} at ${meeting.startTime}`;
 
-    meeting.participants.forEach(participantEmail => {
-      const participant = this.db.getUser(participantEmail);
-      if (participant) {
-        this.notifyUser(
-          participant.email,
-          'New Meeting Scheduled',
-          `You have been invited to a meeting: "${meeting.title}" by ${organizer.name}.`,
-          'MEETING_REMINDER',
-          () => {
-            EmailService.sendMeetingInvitation(
-              participant.email,
-              participant.name,
-              meeting.title,
-              dateTimeStr,
-              organizer.name,
-              meeting.url
-            );
-          }
-        );
-      }
+    const effectiveParticipants = customParticipantEmails || meeting.participants;
+    const isAll = effectiveParticipants.includes('all') || effectiveParticipants.length === 0;
+
+    const targetUsers = isAll
+      ? this.db.getUsers()
+      : effectiveParticipants.map(email => this.db.getUser(email) || { email, name: email.split('@')[0] });
+
+    targetUsers.forEach(participant => {
+      this.notifyUser(
+        participant.email,
+        'New Meeting Scheduled',
+        `You have been invited to a meeting: "${meeting.title}" by ${organizer.name}.`,
+        'MEETING_REMINDER',
+        () => {
+          EmailService.sendMeetingInvitation(
+            participant.email,
+            participant.name,
+            meeting.title,
+            dateTimeStr,
+            organizer.name,
+            meeting.url
+          );
+        }
+      );
+    });
+  }
+
+  // 2b. Dispatch Instant Live Meeting to Selected Persons or All Employees
+  dispatchInstantMeeting(options: {
+    title: string;
+    url: string;
+    platform: string;
+    organizerName: string;
+    organizerEmail: string;
+    participantEmails: string[];
+    customNote?: string;
+    isAll?: boolean;
+  }) {
+    const isAll = options.isAll || options.participantEmails.includes('all') || options.participantEmails.length === 0;
+
+    const targetUsers = isAll
+      ? this.db.getUsers()
+      : options.participantEmails.map(email => this.db.getUser(email) || { email, name: email.split('@')[0] });
+
+    targetUsers.forEach(participant => {
+      this.notifyUser(
+        participant.email,
+        `⚡ Instant Meeting: ${options.title}`,
+        `Host ${options.organizerName} started an instant live meeting: "${options.title}". Click to join now!`,
+        'MEETING_REMINDER',
+        () => {
+          EmailService.sendInstantMeetingInvitation(
+            participant.email,
+            participant.name,
+            options.title,
+            options.url,
+            options.platform,
+            options.organizerName,
+            options.customNote
+          );
+        }
+      );
     });
   }
 
@@ -92,6 +134,7 @@ export class NotificationDispatcher {
     const meeting = this.db.getMeetings().find(m => m.id === meetingId);
     if (!meeting) return;
 
+    const organizer = this.db.getUser(meeting.organizerId) || { name: meeting.organizerId };
     let timeText = 'soon';
     if (alertType === '24H') timeText = 'tomorrow at ' + meeting.startTime;
     if (alertType === '1H') timeText = 'in 1 hour';
@@ -100,8 +143,11 @@ export class NotificationDispatcher {
     const title = alertType === '15M' ? 'Meeting Starting in 15 Minutes' : 'Upcoming Meeting Reminder';
     const message = `Reminder: Meeting "${meeting.title}" starts ${timeText}.`;
 
-    meeting.participants.forEach(participantEmail => {
-      const participant = this.db.getUser(participantEmail);
+    const targetUsers = (meeting.participants.includes('all') || meeting.participants.length === 0)
+      ? this.db.getUsers()
+      : meeting.participants.map(email => this.db.getUser(email)).filter(Boolean) as any[];
+
+    targetUsers.forEach(participant => {
       if (participant) {
         // Verify preference allows this specific timeline
         const prefs = this.db.getUserPreferences(participant.email);
@@ -117,12 +163,88 @@ export class NotificationDispatcher {
                 participant.name,
                 meeting.title,
                 `${meeting.date} at ${meeting.startTime}`,
-                meeting.url
+                meeting.url,
+                meeting.platform,
+                organizer.name
               );
             }
           );
         }
       }
+    });
+  }
+
+  // 3b. Instant Meeting Reminder Broadcast to Attendees / All Employees / Selected Persons
+  dispatchMeetingReminderNow(meetingId: string, customNote?: string, senderName?: string) {
+    const meeting = this.db.getMeetings().find(m => m.id === meetingId);
+    if (!meeting) return;
+
+    const organizer = this.db.getUser(meeting.organizerId) || { name: senderName || meeting.organizerId };
+    const dateTimeStr = `${meeting.date} at ${meeting.startTime}`;
+
+    const targetUsers = (meeting.participants.includes('all') || meeting.participants.length === 0)
+      ? this.db.getUsers()
+      : meeting.participants.map(email => this.db.getUser(email) || { email, name: email.split('@')[0] });
+
+    targetUsers.forEach(participant => {
+      this.notifyUser(
+        participant.email,
+        `⏰ Meeting Reminder: ${meeting.title}`,
+        `Meeting "${meeting.title}" starts at ${meeting.startTime} (${meeting.platform}). Click to join!`,
+        'MEETING_REMINDER',
+        () => {
+          EmailService.sendMeetingReminder(
+            participant.email,
+            participant.name,
+            meeting.title,
+            dateTimeStr,
+            meeting.url,
+            meeting.platform,
+            organizer.name,
+            customNote
+          );
+        }
+      );
+    });
+  }
+
+  // 3c. Meeting Reminder to Explicit Selected Target Persons
+  dispatchMeetingReminderToTarget(
+    meetingId: string,
+    targetEmails: string[],
+    customNote?: string,
+    senderName?: string
+  ) {
+    const meeting = this.db.getMeetings().find(m => m.id === meetingId);
+    if (!meeting) return;
+
+    const organizer = this.db.getUser(meeting.organizerId) || { name: senderName || meeting.organizerId };
+    const dateTimeStr = `${meeting.date} at ${meeting.startTime}`;
+
+    const isAll = targetEmails.includes('all') || targetEmails.length === 0;
+    const targetUsers = isAll
+      ? this.db.getUsers()
+      : targetEmails.map(email => this.db.getUser(email) || { email, name: email.split('@')[0] });
+
+    targetUsers.forEach(participant => {
+      this.notifyUser(
+        participant.email,
+        `⏰ Meeting Reminder: ${meeting.title}`,
+        `Meeting "${meeting.title}" starts at ${meeting.startTime} (${meeting.platform}). Click to join!`,
+        'MEETING_REMINDER',
+        () => {
+          EmailService.sendMeetingReminder(
+            participant.email,
+            participant.name,
+            meeting.title,
+            dateTimeStr,
+            meeting.url,
+            meeting.platform,
+            organizer.name,
+            customNote
+          );
+        }
+      );
     });
   }
 

@@ -406,6 +406,46 @@ const mockUsers = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'cathrinemary0208@gmail.com',
+    email: 'cathrinemary0208@gmail.com',
+    name: 'Rubena Catherine Mary',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'vishwakrish2006@gmail.com',
+    email: 'vishwakrish2006@gmail.com',
+    name: 'Vishwa K',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'Srinithikumar112@gmail.com',
+    email: 'Srinithikumar112@gmail.com',
+    name: 'Srinithi K',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'waseemay1127@outlook.com',
+    email: 'waseemay1127@outlook.com',
+    name: 'Waseem Ahmed',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 

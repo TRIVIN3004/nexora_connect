@@ -420,27 +420,120 @@ export class EmailService {
     this.sendMockEmail(to, subject, 'MEETING_INVITATION', body);
   }
 
-  // 4. Meeting Reminder
-  static sendMeetingReminder(to: string, userName: string, meetingTitle: string, dateTime: string, joinLink: string) {
-    const subject = `Reminder: Meeting "${meetingTitle}" is starting soon`;
+  // 3b. Instant Meeting Invitation
+  static sendInstantMeetingInvitation(
+    to: string,
+    userName: string,
+    meetingTitle: string,
+    joinLink: string,
+    platform: string = 'Google Meet',
+    organizerName: string = 'Host',
+    customNote?: string
+  ) {
+    const subject = `⚡ Live Now: "${meetingTitle}" — Join Instant Meeting`;
     const body = `
-      <div class="welcome">Hello ${userName},</div>
-      <p>This is a reminder that your scheduled meeting: <strong>${meetingTitle}</strong> is starting soon.</p>
+      <div class="welcome">Hello ${userName}, 👋</div>
+      <p>An instant team meeting has just started and you are invited to join live right now!</p>
       
-      <div class="details-card">
+      ${customNote ? `
+      <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 13px; color: #92400E;">
+        <strong>Host Note / Instructions:</strong><br/>
+        <span style="white-space: pre-wrap; margin-top: 4px; display: inline-block;">${customNote}</span>
+      </div>
+      ` : ''}
+
+      <div class="details-card" style="border-left-color: #F59E0B;">
+        <div style="margin-bottom: 10px;">
+          <span style="font-size: 10px; font-weight: bold; background-color: #F59E0B; color: #ffffff; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">
+            ⚡ LIVE INSTANT SYNC
+          </span>
+        </div>
         <div class="details-row">
           <div class="label">Meeting Topic</div>
-          <div class="value">${meetingTitle}</div>
+          <div class="value" style="font-size: 16px; font-weight: bold; color: #0F172A;">${meetingTitle}</div>
         </div>
         <div class="details-row" style="margin-top: 12px;">
-          <div class="label">Start Time</div>
-          <div class="value">${dateTime}</div>
+          <div class="label">Host / Organizer</div>
+          <div class="value">👤 ${organizerName}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Platform</div>
+          <div class="value" style="font-weight: 600; color: #0878C9;">📹 ${platform}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Direct Join Link</div>
+          <div class="value" style="word-break: break-all;"><a href="${joinLink}" target="_blank" style="color: #0878C9; font-weight: 600;">${joinLink}</a></div>
         </div>
       </div>
 
       <div class="btn-container">
-        <a href="${joinLink}" class="btn" target="_blank">Join Meeting Now</a>
+        <a href="${joinLink}" class="btn" target="_blank" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); font-size: 15px; padding: 14px 34px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);">
+          ⚡ Join Instant Meeting Now
+        </a>
       </div>
+
+      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-top: 20px;">
+        Please click above to enter the conference room immediately.
+      </p>
+    `;
+    this.sendMockEmail(to, subject, 'INSTANT_MEETING_INVITE', body);
+  }
+
+  // 4. Meeting Reminder
+  static sendMeetingReminder(
+    to: string,
+    userName: string,
+    meetingTitle: string,
+    dateTime: string,
+    joinLink: string,
+    platform: string = 'Google Meet',
+    organizerName: string = 'Nexora Organizer',
+    customNote?: string
+  ) {
+    const subject = `⏰ Reminder: Meeting "${meetingTitle}" is starting soon`;
+    const body = `
+      <div class="welcome">Hello ${userName}, 👋</div>
+      <p>This is a reminder that your scheduled team meeting: <strong>"${meetingTitle}"</strong> is starting soon.</p>
+      
+      ${customNote ? `
+      <div style="background-color: #EFF6FF; border-left: 4px solid #0878C9; padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 13px; color: #1E3A8A;">
+        <strong>Note from organizer:</strong><br/>
+        <span style="white-space: pre-wrap; margin-top: 4px; display: inline-block;">${customNote}</span>
+      </div>
+      ` : ''}
+
+      <div class="details-card">
+        <div class="details-row">
+          <div class="label">Meeting Topic</div>
+          <div class="value" style="font-size: 15px; font-weight: bold; color: #0F172A;">${meetingTitle}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Organizer / Host</div>
+          <div class="value">👤 ${organizerName}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Date & Time</div>
+          <div class="value">⏰ ${dateTime}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Platform</div>
+          <div class="value" style="font-weight: 600; color: #0878C9;">📹 ${platform}</div>
+        </div>
+        <div class="details-row" style="margin-top: 12px;">
+          <div class="label">Meeting Link</div>
+          <div class="value" style="word-break: break-all;"><a href="${joinLink}" target="_blank" style="color: #0878C9; font-weight: 600;">${joinLink}</a></div>
+        </div>
+      </div>
+
+      <div class="btn-container">
+        <a href="${joinLink}" class="btn" target="_blank" style="font-size: 15px; padding: 14px 34px;">
+          🚀 Join ${platform} Room Now
+        </a>
+      </div>
+
+      <p style="font-size: 12px; color: #94A3B8; text-align: center; margin-top: 20px;">
+        <em>Tip: Please join on time and verify your microphone and webcam settings.</em>
+      </p>
     `;
     this.sendMockEmail(to, subject, 'MEETING_REMINDER', body);
   }

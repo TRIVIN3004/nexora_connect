@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { BroadcastModal } from './BroadcastModal';
 import { InstantEmailModal } from './InstantEmailModal';
+import { InstantMeetingModal } from './InstantMeetingModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,6 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
+  const [isInstantMeetingModalOpen, setIsInstantMeetingModalOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
   // Retrieve user notifications
@@ -249,7 +251,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           {/* Right Header Panel Actions */}
-          <div className="flex items-center space-x-3.5">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+
+            {/* Instant Meeting Action Button */}
+            <button
+              onClick={() => setIsInstantMeetingModalOpen(true)}
+              className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+              title="Launch instant live conference bridge and notify selected persons"
+            >
+              <Zap size={13} className="text-yellow-200 fill-current animate-pulse" />
+              <span>Instant Meet</span>
+            </button>
 
             {/* Instant Email Action Button */}
             <button
@@ -460,6 +472,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <InstantEmailModal
         isOpen={isInstantEmailModalOpen}
         onClose={() => setIsInstantEmailModalOpen(false)}
+      />
+
+      {/* Global Sudden Instant Meeting Modal */}
+      <InstantMeetingModal
+        isOpen={isInstantMeetingModalOpen}
+        onClose={() => setIsInstantMeetingModalOpen(false)}
       />
     </div>
   );
