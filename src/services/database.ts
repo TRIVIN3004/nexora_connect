@@ -177,6 +177,34 @@ export interface AuditLog {
   timestamp: string;
 }
 
+export interface AttendanceStudentEntry {
+  name: string;
+  email: string;
+  status: 'PRESENT' | 'ABSENT';
+  remarks?: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  date: string; // YYYY-MM-DD
+  formattedDate: string; // e.g. "Sunday, September 27, 2026"
+  sessionTitle: string;
+  totalStudents: number;
+  presentCount: number;
+  absentCount: number;
+  presentEmails: string[];
+  absentEmails: string[];
+  students: AttendanceStudentEntry[];
+  markedBy: string; // admin email
+  markedByName: string; // admin name
+  emailsSent: boolean;
+  presentEmailsSent?: number;
+  absentWarningsSent?: number;
+  adminReportsSent?: number;
+  notes?: string;
+  createdAt: string;
+}
+
 // ----------------------------------------------------
 // SAMPLE INITIAL DATA
 // ----------------------------------------------------
@@ -651,6 +679,16 @@ const defaultUsers: User[] = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'keerthivasan@gmail.com',
+    email: 'keerthivasan@gmail.com',
+    name: 'Keerthivasan',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
@@ -722,6 +760,90 @@ const defaultNotifications: Notification[] = [
 const defaultPreferences: NotificationPreference[] = [];
 const defaultAuditLogs: AuditLog[] = [];
 const defaultFeedbacks: Feedback[] = [];
+
+const defaultAttendanceRecords: AttendanceRecord[] = [
+  {
+    id: 'att-session-2026-09-27',
+    date: '2026-09-27',
+    formattedDate: 'Sunday, September 27, 2026',
+    sessionTitle: 'Daily Technical Training & Internship Standup',
+    totalStudents: 43,
+    presentCount: 15,
+    absentCount: 28,
+    presentEmails: [
+      'trivintrivin2005@gmail.com',
+      'naveensv0112@gmail.com',
+      'kanimozhiprakash2006@gmail.com',
+      'ireneclemencia2311@gmail.com',
+      'srdharshanraj@gmail.com',
+      'kishoremohan1307@gmail.com',
+      'krmadona23@gmail.com',
+      'nidiyarajkadavan@gmail.com',
+      'pavithraayohan@gmail.com',
+      'ssujitha9307@gmail.com',
+      'prishaaraj06@gmail.com',
+      'cathrinemary0208@gmail.com',
+      'sangamithrakesavan8@gmail.com',
+      'vishwakrish2006@gmail.com',
+      'keerthivasan@gmail.com'
+    ],
+    absentEmails: [
+      'mrohith0089@gmail.com',
+      'srikreekszoldych@gmail.com',
+      'waseemay1127@gmail.com',
+      'aakashrajselvam@gmail.com',
+      'sivaranjanisumathi75@gmail.com',
+      'justinsam1902@gmail.com',
+      'sankarleo23@gmail.com',
+      'santho06raj@gmail.com',
+      'dineshkumar.muthuvel2011@gmail.com',
+      'pathmavathis2005@gmail.com',
+      'poojavellingiri15@gmail.com',
+      'naujawanf@gmail.com',
+      'akshuraj2005@gmail.com',
+      'aswin3908@gmail.com',
+      'yani.muizz2008@gmail.com',
+      'sanjayselvakumar550@gmail.com',
+      'sanjayvijay20051512@gmail.com',
+      'aaryanjain950@gmail.com',
+      'mgokulashri944@gmail.com',
+      'ajay872072@gmail.com',
+      'vishnu30426@gmail.com',
+      'bharathgandhi92@gmail.com',
+      'gokulpriyan96@gmail.com',
+      'angelsharon283@gmail.com',
+      'Srinithikumar112@gmail.com',
+      'amirthavarshinitd@gmail.com',
+      'anish30092007@gmail.com',
+      'shakthij162@gmail.com'
+    ],
+    students: [
+      { name: 'Trivin', email: 'trivintrivin2005@gmail.com', status: 'PRESENT' },
+      { name: 'Naveen', email: 'naveensv0112@gmail.com', status: 'PRESENT' },
+      { name: 'Kanimozhi', email: 'kanimozhiprakash2006@gmail.com', status: 'PRESENT' },
+      { name: 'IRENE CLEMENCIA', email: 'ireneclemencia2311@gmail.com', status: 'PRESENT' },
+      { name: 'Dharsha raj S R', email: 'srdharshanraj@gmail.com', status: 'PRESENT' },
+      { name: 'Kishore Mohan', email: 'kishoremohan1307@gmail.com', status: 'PRESENT' },
+      { name: 'Madona', email: 'krmadona23@gmail.com', status: 'PRESENT' },
+      { name: 'Nidiya Raj Kadavan', email: 'nidiyarajkadavan@gmail.com', status: 'PRESENT' },
+      { name: 'Pavithraa S', email: 'pavithraayohan@gmail.com', status: 'PRESENT' },
+      { name: 'Sujitha S', email: 'ssujitha9307@gmail.com', status: 'PRESENT' },
+      { name: 'Prishaa Kamal', email: 'prishaaraj06@gmail.com', status: 'PRESENT' },
+      { name: 'Rubena Catherine Mary', email: 'cathrinemary0208@gmail.com', status: 'PRESENT' },
+      { name: 'Sangamithra K', email: 'sangamithrakesavan8@gmail.com', status: 'PRESENT' },
+      { name: 'Vishwa K', email: 'vishwakrish2006@gmail.com', status: 'PRESENT' },
+      { name: 'Keerthivasan', email: 'keerthivasan@gmail.com', status: 'PRESENT' }
+    ],
+    markedBy: 'contactnexoratechs@gmail.com',
+    markedByName: 'Administrator',
+    emailsSent: true,
+    presentEmailsSent: 15,
+    absentWarningsSent: 28,
+    adminReportsSent: 2,
+    notes: 'Official live session attendance marker and email warning protocol executed.',
+    createdAt: new Date().toISOString()
+  }
+];
 
 // ----------------------------------------------------
 // STORAGE HELPER METHODS
@@ -2137,5 +2259,28 @@ export class NexoraDatabase {
         if (error) console.error('[SUPABASE] deleteCompanyMessage error:', error);
       });
     }
+  }
+
+  // Attendance Records Management
+  getAttendanceRecords(): AttendanceRecord[] {
+    return getStorageItem<AttendanceRecord[]>('nexora_attendance_records', defaultAttendanceRecords);
+  }
+
+  saveAttendanceRecord(record: AttendanceRecord): AttendanceRecord {
+    const records = this.getAttendanceRecords();
+    const existingIdx = records.findIndex(r => r.id === record.id);
+    let updatedRecords: AttendanceRecord[];
+    if (existingIdx > -1) {
+      updatedRecords = records.map(r => r.id === record.id ? record : r);
+    } else {
+      updatedRecords = [record, ...records];
+    }
+    setStorageItem('nexora_attendance_records', updatedRecords);
+    return record;
+  }
+
+  deleteAttendanceRecord(id: string): void {
+    const records = this.getAttendanceRecords().filter(r => r.id !== id);
+    setStorageItem('nexora_attendance_records', records);
   }
 }

@@ -150,31 +150,31 @@ export class EmailService {
     `;
   }
 
-  // Send function
-  static sendMockEmail(to: string, subject: string, templateType: string, bodyContent: string) {
+  // Async Real Send function with return promise
+  static async sendRealEmailAsync(
+    to: string,
+    subject: string,
+    templateType: string,
+    bodyContent: string
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
     const fullHtml = this.renderTemplate(subject, bodyContent);
     const mockEmail: SentEmail = {
-      id: `mail-${Date.now()}`,
-      to,
+      id: `mail-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      to: to.trim(),
       subject,
       body: fullHtml,
       sentAt: new Date().toISOString(),
       templateType
     };
     saveSentEmail(mockEmail);
-    console.log(`[SMTP SIMULATOR] Email logged to sandbox for ${to}. Subject: ${subject}.`);
 
-    // Real email dispatch with verified Resend configuration
-    const apiKey = (import.meta as any).env?.VITE_RESEND_API_KEY || localStorage.getItem('nexora_email_api_key');
-
+    const apiKey = (import.meta as any).env?.VITE_RESEND_API_KEY || localStorage.getItem('nexora_email_api_key') || '';
     let fromAddress = (import.meta as any).env?.VITE_RESEND_FROM_EMAIL || localStorage.getItem('nexora_email_from');
     if (!fromAddress || fromAddress === 'onboarding@resend.dev' || fromAddress.includes('@gmail.com') || fromAddress.includes('@yahoo.com') || fromAddress.includes('@outlook.com') || fromAddress.includes('@hotmail.com')) {
       fromAddress = 'connect@mail.nexoratechs.xyz';
     }
 
-    // Always send directly to target recipient
     const recipient = to.trim();
-
     const emailPayload = {
       from: `Nexora Connect <${fromAddress}>`,
       to: [recipient],
@@ -184,44 +184,54 @@ export class EmailService {
       apiKey: apiKey
     };
 
-      // 1. Try local / Vercel serverless proxy endpoint to avoid browser CORS
-      fetch('/api/send-email', {
+    try {
+      // 1. Try local dev proxy endpoint
+      const proxyRes = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(emailPayload)
-      })
-      .then(async res => {
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          console.log(`[SMTP RESEND API] Real email successfully sent to ${recipient}! ID:`, data.id || 'ok');
-        } else {
-          // 2. Fallback to direct fetch if proxy unavailable
-          return fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              from: `Nexora Connect <${fromAddress}>`,
-              to: [recipient],
-              reply_to: 'contactnexoratechs@gmail.com',
-              subject: subject,
-              html: fullHtml
-            })
-          }).then(async r => {
-            if (r.ok) {
-              console.log(`[SMTP RESEND API] Fallback email sent to ${recipient}!`);
-            } else {
-              const err = await r.json().catch(() => ({}));
-              console.error('[SMTP RESEND API] Fallback error from Resend:', err);
-            }
-          });
-        }
-      })
-      .catch(err => {
-        console.error('[SMTP RESEND API] Dispatch failed:', err);
+      }).catch(() => null);
+
+      if (proxyRes && proxyRes.ok) {
+        const data = await proxyRes.json().catch(() => ({}));
+        console.log(`[SMTP RESEND API] Real email successfully sent to ${recipient}! ID:`, data.id || 'ok');
+        return { success: true, id: data.id || 'sent-proxy' };
+      }
+
+      // 2. Direct fallback
+      const directRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: `Nexora Connect <${fromAddress}>`,
+          to: [recipient],
+          reply_to: 'contactnexoratechs@gmail.com',
+          subject: subject,
+          html: fullHtml
+        })
       });
+
+      if (directRes.ok) {
+        const data = await directRes.json().catch(() => ({}));
+        console.log(`[SMTP RESEND API] Direct fallback email sent to ${recipient}!`);
+        return { success: true, id: data.id || 'sent-direct' };
+      } else {
+        const err = await directRes.json().catch(() => ({ error: 'HTTP error ' + directRes.status }));
+        console.warn('[SMTP RESEND API] Direct error:', err);
+        return { success: false, error: JSON.stringify(err) };
+      }
+    } catch (err: any) {
+      console.error('[SMTP RESEND API] Dispatch error for ' + recipient, err);
+      return { success: false, error: err?.message || 'Network error' };
+    }
+  }
+
+  // Synchronous wrapper
+  static sendMockEmail(to: string, subject: string, templateType: string, bodyContent: string) {
+    this.sendRealEmailAsync(to, subject, templateType, bodyContent);
   }
 
   static getSentEmailsList(): SentEmail[] {
@@ -784,6 +794,253 @@ export class EmailService {
       </p>
     `;
     this.sendMockEmail(to, subject, 'EXPERIENCE_CERTIFICATE', body);
+  }
+
+  // 18. Attendance Present Confirmation Email
+  static async sendAttendancePresentEmail(
+    to: string,
+    userName: string,
+    dateStr: string,
+    sessionTitle: string = 'Daily Technical Training & Internship Standup',
+    customNote?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
+    const subject = `✅ Attendance Confirmed: Present Today (${dateStr}) — Nexora Technologies`;
+    const body = `
+      <div style="background-color: #F0FDF4; border-left: 4px solid #10B981; border-radius: 8px; padding: 18px 20px; margin-bottom: 24px;">
+        <div style="font-size: 16px; font-weight: 800; color: #15803D; margin-bottom: 4px;">
+          ✓ Status: PRESENT & CONFIRMED
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.5;">
+          Your attendance for today's session has been officially recorded in the company registry.
+        </p>
+      </div>
+
+      <div class="welcome">Dear <strong>${userName}</strong>, 👋</div>
+      <p>Thank you for your active participation, punctuality, and commitment to the technical training sessions and project milestones at <strong>Nexora Technologies</strong>.</p>
+      
+      <div class="details-card">
+        <div class="details-row">
+          <div class="label">Session Topic</div>
+          <div class="value" style="font-weight: 700; color: #0F172A;">${sessionTitle}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Session Date</div>
+          <div class="value">${dateStr}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Attendance Status</div>
+          <div class="value" style="color: #15803D; font-weight: 700;">Present & Engaged</div>
+        </div>
+      </div>
+
+      ${customNote ? `
+      <div style="background-color: #EFF6FF; border-left: 4px solid #0878C9; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #1E3A8A;">
+        <strong>Instructor Remarks:</strong><br/>
+        <span style="white-space: pre-wrap; margin-top: 4px; display: inline-block;">${customNote}</span>
+      </div>
+      ` : ''}
+
+      <p>Keep up the great consistency! Please ensure you submit your daily progress notes in the <strong>Knowledge Wiki</strong> and check upcoming technical webinars on <strong>Nexora Connect</strong>.</p>
+
+      <div class="btn-container">
+        <a href="https://nexora-connect.vercel.app" class="btn" target="_blank">Open Nexora Connect Portal</a>
+      </div>
+
+      <p style="margin-top: 24px; font-size: 13px; color: #475569;">
+        Best regards,<br/>
+        <strong>Nexora Operations & Technical Training Team</strong><br/>
+        <span style="font-size: 11px; color: #94A3B8;">Nexora Technologies • connect@mail.nexoratechs.xyz</span>
+      </p>
+    `;
+    return this.sendRealEmailAsync(to, subject, 'ATTENDANCE_PRESENT', body);
+  }
+
+  // 19. Attendance Absent Warning Notice Email
+  static async sendAttendanceAbsentWarningEmail(
+    to: string,
+    userName: string,
+    dateStr: string,
+    sessionTitle: string = 'Daily Technical Training & Internship Standup',
+    customNote?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
+    const subject = `⚠️ Notice: Absence Recorded Today (${dateStr}) — Nexora Technologies`;
+    const body = `
+      <div style="background-color: #FEF2F2; border-left: 4px solid #EF4444; border-radius: 8px; padding: 18px 20px; margin-bottom: 24px;">
+        <div style="font-size: 16px; font-weight: 800; color: #B91C1C; margin-bottom: 4px;">
+          ⚠️ Official Warning: ABSENT
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: #991B1B; line-height: 1.5;">
+          You were marked <strong>ABSENT</strong> for today's mandatory scheduled session.
+        </p>
+      </div>
+
+      <div class="welcome">Dear <strong>${userName}</strong>,</div>
+      <p>This is an automated notification from Nexora Administration to inform you that your absence was marked for the session on <strong>${dateStr}</strong>.</p>
+      
+      <div class="details-card">
+        <div class="details-row">
+          <div class="label">Session Topic</div>
+          <div class="value" style="font-weight: 700; color: #0F172A;">${sessionTitle}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Session Date</div>
+          <div class="value">${dateStr}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Recorded Status</div>
+          <div class="value" style="color: #DC2626; font-weight: 700;">Absent (Unexcused)</div>
+        </div>
+      </div>
+
+      <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px 18px; margin: 20px 0;">
+        <strong style="color: #92400E; font-size: 13.5px;">⚠️ Mandatory Policy Compliance Notice:</strong>
+        <p style="font-size: 12.5px; color: #78350F; margin: 6px 0 0 0; line-height: 1.55;">
+          Maintaining a minimum of <strong>85% attendance</strong> is strictly mandatory to successfully qualify for the <strong>Internship Completion Certificate</strong>, Experience Letter, and performance recommendations.
+        </p>
+      </div>
+
+      ${customNote ? `
+      <div style="background-color: #F8FAFC; border-left: 4px solid #64748B; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #334155;">
+        <strong>Note from Administration:</strong><br/>
+        <span style="white-space: pre-wrap; margin-top: 4px; display: inline-block;">${customNote}</span>
+      </div>
+      ` : ''}
+
+      <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px 18px; margin: 20px 0;">
+        <strong style="color: #334155; font-size: 13px;">Immediate Next Steps:</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 12.5px; color: #475569; line-height: 1.6;">
+          <li>If your absence was due to an emergency or medical reason, email administrative proof immediately to <a href="mailto:contactnexoratechs@gmail.com" style="color: #0878C9; font-weight: 600;">contactnexoratechs@gmail.com</a>.</li>
+          <li>Review missed topics and lecture recordings on the <strong>Nexora Connect Portal</strong>.</li>
+          <li>Ensure 100% punctuality for tomorrow's scheduled session.</li>
+        </ul>
+      </div>
+
+      <div class="btn-container">
+        <a href="https://nexora-connect.vercel.app" class="btn" target="_blank">Access Recordings on Nexora Connect</a>
+      </div>
+
+      <p style="margin-top: 24px; font-size: 13px; color: #475569;">
+        Sincerely,<br/>
+        <strong>Department of Human Resources & Training</strong><br/>
+        <span style="font-size: 11px; color: #94A3B8;">Nexora Technologies • contactnexoratechs@gmail.com</span>
+      </p>
+    `;
+    return this.sendRealEmailAsync(to, subject, 'ATTENDANCE_ABSENT_WARNING', body);
+  }
+
+  // 20. Executive Attendance Report to Administrators
+  static async sendAttendanceAdminReport(
+    adminEmail: string,
+    adminName: string,
+    dateStr: string,
+    sessionTitle: string,
+    presentList: { name: string; email: string }[],
+    absentList: { name: string; email: string }[],
+    customNote?: string
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
+    const totalStudents = presentList.length + absentList.length;
+    const rate = totalStudents > 0 ? ((presentList.length / totalStudents) * 100).toFixed(1) : '0.0';
+    const subject = `📊 Executive Attendance Summary (${dateStr}) — Nexora Technologies`;
+
+    const presentRows = presentList.map((s, idx) => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-family: monospace; font-size: 11px; color: #64748b;">${idx + 1}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #0f172a;">${s.name}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; color: #475569; font-family: monospace;">${s.email}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9;"><span style="background-color: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 9999px; font-weight: 700; font-size: 10.5px;">PRESENT</span></td>
+      </tr>
+    `).join('');
+
+    const absentRows = absentList.map((s, idx) => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-family: monospace; font-size: 11px; color: #64748b;">${idx + 1}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #0f172a;">${s.name}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; color: #475569; font-family: monospace;">${s.email}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9;"><span style="background-color: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 9999px; font-weight: 700; font-size: 10.5px;">ABSENT (Warning Sent)</span></td>
+      </tr>
+    `).join('');
+
+    const body = `
+      <div class="welcome">Dear <strong>${adminName}</strong>,</div>
+      <p>Here is the official executive attendance summary report for <strong>${sessionTitle}</strong> on <strong>${dateStr}</strong>:</p>
+      
+      <div style="display: table; width: 100%; margin: 20px 0; border-collapse: separate; border-spacing: 8px;">
+        <div style="display: table-row;">
+          <div style="display: table-cell; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Students</div>
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px;">${totalStudents}</div>
+          </div>
+          <div style="display: table-cell; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 14px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase;">Present</div>
+            <div style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 4px;">${presentList.length}</div>
+          </div>
+          <div style="display: table-cell; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 700; color: #991b1b; text-transform: uppercase;">Absent</div>
+            <div style="font-size: 22px; font-weight: 800; color: #b91c1c; margin-top: 4px;">${absentList.length}</div>
+          </div>
+          <div style="display: table-cell; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 700; color: #0369a1; text-transform: uppercase;">Turnout Rate</div>
+            <div style="font-size: 22px; font-weight: 800; color: #0284c7; margin-top: 4px;">${rate}%</div>
+          </div>
+        </div>
+      </div>
+
+      ${customNote ? `
+      <div style="background-color: #EFF6FF; border-left: 4px solid #0878C9; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #1E3A8A;">
+        <strong>Session Notes / Remarks:</strong><br/>
+        <span style="white-space: pre-wrap; margin-top: 4px; display: inline-block;">${customNote}</span>
+      </div>
+      ` : ''}
+
+      <h3 style="color: #0f172a; font-size: 14px; margin-top: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">
+        ✅ Present Students (${presentList.length})
+      </h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px;">
+        <thead>
+          <tr style="background-color: #f8fafc; color: #475569; font-weight: 700; text-align: left;">
+            <th style="padding: 8px 12px; width: 40px; border-bottom: 2px solid #e2e8f0;">#</th>
+            <th style="padding: 8px 12px; border-bottom: 2px solid #e2e8f0;">Student Name</th>
+            <th style="padding: 8px 12px; border-bottom: 2px solid #e2e8f0;">Email</th>
+            <th style="padding: 8px 12px; border-bottom: 2px solid #e2e8f0;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${presentRows}
+        </tbody>
+      </table>
+
+      <h3 style="color: #0f172a; font-size: 14px; margin-top: 28px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">
+        ⚠️ Absent Students — Warning Notices Dispatched (${absentList.length})
+      </h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px;">
+        <thead>
+          <tr style="background-color: #f8fafc; color: #475569; font-weight: 700; text-align: left;">
+            <th style="padding: 8px 12px; width: 40px; border-bottom: 2px solid #e2e8f0;">#</th>
+            <th style="padding: 8px 12px; border-bottom: 2px solid #e2e8f0;">Student Name</th>
+            <th style="padding: 8px 12px; border-bottom: 2px solid #e2e8f0;">Email</th>
+            <th style="padding: 8px 12px; border-bottom: 2px solid #e2e8f0;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${absentRows}
+        </tbody>
+      </table>
+
+      <div class="btn-container">
+        <a href="https://nexora-connect.vercel.app" class="btn" target="_blank">Open Nexora Connect Portal</a>
+      </div>
+
+      <p style="margin-top: 20px; font-size: 12px; color: #64748b;">
+        <em>Dispatch Summary: Confirmation emails were dispatched to all ${presentList.length} present students, and formal warning notices were sent to all ${absentList.length} absent students.</em>
+      </p>
+      
+      <p style="margin-top: 20px;">
+        Generated automatically by,<br/>
+        <strong>Nexora Connect Automated Operations Protocol</strong><br/>
+        <span style="font-size: 11px; color: #94A3B8;">Nexora Technologies Executive System</span>
+      </p>
+    `;
+    return this.sendRealEmailAsync(adminEmail, subject, 'ATTENDANCE_ADMIN_REPORT', body);
   }
 }
 

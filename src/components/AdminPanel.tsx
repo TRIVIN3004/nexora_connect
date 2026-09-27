@@ -19,18 +19,20 @@ import {
   Pin,
   Zap,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  UserCheck
 } from 'lucide-react';
 import type { User, KnowledgeNote } from '../services/database';
 import { EmailService } from '../services/email';
 import type { SentEmail } from '../services/email';
 import { BroadcastModal } from './BroadcastModal';
 import { InstantEmailModal } from './InstantEmailModal';
+import { AttendanceManager } from './AttendanceManager';
 
 export const AdminPanel: React.FC = () => {
   const { db, currentUser, triggerRefresh, setCurrentTab } = useApp();
 
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'sessions' | 'broadcasts' | 'users' | 'moderation' | 'emails' | 'audit'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'attendance' | 'sessions' | 'broadcasts' | 'users' | 'moderation' | 'emails' | 'audit'>('attendance');
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isInstantEmailModalOpen, setIsInstantEmailModalOpen] = useState(false);
   const [instantEmailInitialTargets, setInstantEmailInitialTargets] = useState<string[]>([]);
@@ -57,6 +59,7 @@ export const AdminPanel: React.FC = () => {
   const auditLogs = db.getAuditLogs();
   const emailLogs = EmailService.getSentEmailsList();
   const feedbacks = db.getFeedbacks();
+  const allAttendanceRecords = db.getAttendanceRecords();
 
   // Handlers for Sessions
   const handleAdminFinishSession = (webinarId: string, title: string) => {
@@ -178,6 +181,7 @@ export const AdminPanel: React.FC = () => {
       {/* Tab select bar */}
       <div className="border-b border-slate-200 dark:border-dark-border flex flex-wrap gap-1.5 pb-px">
         {[
+          { id: 'attendance', name: 'Attendance & Mailer', icon: UserCheck, badge: allAttendanceRecords.length },
           { id: 'analytics', name: 'Dashboard Analytics', icon: Users },
           { id: 'sessions', name: 'Meetings & Webinars', icon: Calendar, badge: allWebinars.filter(w => w.status !== 'COMPLETED').length },
           { id: 'broadcasts', name: 'Company Broadcasts', icon: Megaphone, badge: allBroadcasts.length },
@@ -211,12 +215,20 @@ export const AdminPanel: React.FC = () => {
       </div>
 
       {/* ====================================================
+          SUB-TAB: ATTENDANCE & MAILER
+          ==================================================== */}
+      {activeSubTab === 'attendance' && (
+        <AttendanceManager />
+      )}
+
+      {/* ====================================================
           SUB-TAB: ANALYTICS
           ==================================================== */}
       {activeSubTab === 'analytics' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { name: 'Total Accounts', val: allUsers.length, icon: Users, color: 'text-blue-500 bg-blue-500/10' },
+            { name: 'Attendance Sessions', val: allAttendanceRecords.length, icon: UserCheck, color: 'text-emerald-500 bg-emerald-500/10' },
             { name: 'Company Broadcasts', val: allBroadcasts.length, icon: Megaphone, color: 'text-sky-500 bg-sky-500/10' },
             { name: 'Upcoming Webinars', val: allWebinars.filter(w => w.status === 'UPCOMING').length, icon: Calendar, color: 'text-purple-500 bg-purple-500/10' },
             { name: 'Meetings This Week', val: allMeetings.length, icon: Clock, color: 'text-green-500 bg-green-500/10' },
