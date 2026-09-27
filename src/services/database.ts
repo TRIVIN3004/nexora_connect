@@ -641,6 +641,16 @@ const defaultUsers: User[] = [
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'
+  },
+  {
+    id: 'ireneclemencia2311@gmail.com',
+    email: 'ireneclemencia2311@gmail.com',
+    name: 'IRENE CLEMENCIA',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
   }
 ];
 
