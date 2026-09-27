@@ -263,25 +263,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <span>Instant Meet</span>
             </button>
 
-            {/* Instant Email Action Button */}
-            <button
-              onClick={() => setIsInstantEmailModalOpen(true)}
-              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
-              title="Send an immediate broadcast email to all company employees"
-            >
-              <Zap size={14} className="text-yellow-200 animate-pulse" />
-              <span>Instant Email</span>
-            </button>
+            {/* Instant Email Action Button (Admin Only) */}
+            {currentUser.role === 'ADMIN' && (
+              <button
+                onClick={() => setIsInstantEmailModalOpen(true)}
+                className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+                title="Send an immediate broadcast email to all company employees (Admin Only)"
+              >
+                <Zap size={14} className="text-yellow-200 animate-pulse" />
+                <span>Instant Email</span>
+              </button>
+            )}
 
-            {/* Quick Broadcast Action Button */}
-            <button
-              onClick={() => setIsBroadcastModalOpen(true)}
-              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-nexora-blue to-sky-600 hover:from-nexora-blue/90 hover:to-sky-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
-              title="Broadcast message to all company employees"
-            >
-              <Megaphone size={14} className="text-yellow-300" />
-              <span>Broadcast</span>
-            </button>
+            {/* Quick Broadcast Action Button (Admin Only) */}
+            {currentUser.role === 'ADMIN' && (
+              <button
+                onClick={() => setIsBroadcastModalOpen(true)}
+                className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-nexora-blue to-sky-600 hover:from-nexora-blue/90 hover:to-sky-700 text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+                title="Broadcast message to all company employees (Admin Only)"
+              >
+                <Megaphone size={14} className="text-yellow-300" />
+                <span>Broadcast</span>
+              </button>
+            )}
 
             {/* Theme Toggle Widget */}
             <button

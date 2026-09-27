@@ -413,6 +413,16 @@ const defaultUsers: User[] = [
     password: 'Nexora@123'
   },
   {
+    id: 'shakthij162@gmail.com',
+    email: 'shakthij162@gmail.com',
+    name: 'Shakthi',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
     id: 'anish30092007@gmail.com',
     email: 'anish30092007@gmail.com',
     name: 'Anish K',
@@ -598,6 +608,26 @@ const defaultUsers: User[] = [
     name: 'Waseem Ahmed',
     role: 'EMPLOYEE',
     avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'shakthij162@gmail.com',
+    email: 'shakthij162@gmail.com',
+    name: 'Shakthi',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    designation: 'Software Associate',
+    organization: 'Nexora Technologies',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'anish30092007@gmail.com',
+    email: 'anish30092007@gmail.com',
+    name: 'Anish K',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     designation: 'Software Associate',
     organization: 'Nexora Technologies',
     password: 'Nexora@123'

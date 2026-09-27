@@ -37,7 +37,9 @@ export const MeetingScheduler: React.FC = () => {
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
 
   // Scheduled Meeting Person Selection
-  const [targetMode, setTargetMode] = useState<'ALL' | 'SPECIFIC'>('ALL');
+  const [targetMode, setTargetMode] = useState<'ALL' | 'SPECIFIC'>(
+    currentUser.role === 'ADMIN' ? 'ALL' : 'SPECIFIC'
+  );
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [sendInviteEmail, setSendInviteEmail] = useState(true);
   const [formStatus, setFormStatus] = useState<string | null>(null);
@@ -85,10 +87,11 @@ export const MeetingScheduler: React.FC = () => {
 
   const handleCreateMeeting = (e: React.FormEvent) => {
     e.preventDefault();
-    const participantsArr = targetMode === 'ALL' ? ['all'] : selectedEmails;
+    const isAll = currentUser.role === 'ADMIN' && targetMode === 'ALL';
+    const participantsArr = isAll ? ['all'] : selectedEmails;
 
-    if (targetMode === 'SPECIFIC' && participantsArr.length === 0) {
-      setFormStatus('❌ Please select at least one person or choose All Company Members.');
+    if (!isAll && participantsArr.length === 0) {
+      setFormStatus('❌ Please select at least one person to invite.');
       return;
     }
 
@@ -166,6 +169,11 @@ export const MeetingScheduler: React.FC = () => {
       if (reminderTargetMode === 'ATTENDEES') {
         targetEmails = meetingToRemind.participants;
       } else if (reminderTargetMode === 'ALL') {
+        if (currentUser.role !== 'ADMIN') {
+          setSendingReminder(false);
+          setReminderStatus('❌ Unauthorized: Only administrators can broadcast meeting reminders to all company employees.');
+          return;
+        }
         targetEmails = ['all'];
       } else {
         targetEmails = reminderSelectedEmails;
@@ -384,7 +392,7 @@ export const MeetingScheduler: React.FC = () => {
                 agenda: '',
                 type: 'Team Meeting'
               });
-              setTargetMode('ALL');
+              setTargetMode(currentUser.role === 'ADMIN' ? 'ALL' : 'SPECIFIC');
               setSelectedEmails([]);
               setSendInviteEmail(true);
               setFormStatus(null);
@@ -625,9 +633,9 @@ export const MeetingScheduler: React.FC = () => {
                         <button
                           onClick={() => openReminderModal(meet)}
                           className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white rounded-lg text-xs font-semibold flex items-center transition-colors"
-                          title="Broadcast Reminder Email to All"
+                          title={currentUser.role === 'ADMIN' ? 'Broadcast Reminder Email to All' : 'Send Reminder to Meeting Attendees'}
                         >
-                          <Mail size={13} className="mr-1.5" /> Send Reminder to All
+                          <Mail size={13} className="mr-1.5" /> {currentUser.role === 'ADMIN' ? 'Send Reminder to All' : 'Send Reminder'}
                         </button>
                         <button
                           onClick={() => openEditForm(meet)}
@@ -707,7 +715,7 @@ export const MeetingScheduler: React.FC = () => {
                   Choose Reminder Target Audience <span className="text-red-500">*</span>
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+                <div className={`grid grid-cols-1 ${currentUser.role === 'ADMIN' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-2 mb-2`}>
                   <button
                     type="button"
                     onClick={() => setReminderTargetMode('ATTENDEES')}
@@ -726,23 +734,25 @@ export const MeetingScheduler: React.FC = () => {
                     <span className="text-[10px] text-slate-400 block mt-0.5">Invited roster</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setReminderTargetMode('ALL')}
-                    className={`p-2.5 rounded-xl border text-left transition-all text-xs font-semibold cursor-pointer ${
-                      reminderTargetMode === 'ALL'
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-200 ring-1 ring-amber-500/50'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <div className="font-bold flex items-center justify-between">
-                      <span>All Employees</span>
-                      <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.2 rounded font-extrabold">
-                        {allUsers.length}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Company-wide</span>
-                  </button>
+                  {currentUser.role === 'ADMIN' && (
+                    <button
+                      type="button"
+                      onClick={() => setReminderTargetMode('ALL')}
+                      className={`p-2.5 rounded-xl border text-left transition-all text-xs font-semibold cursor-pointer ${
+                        reminderTargetMode === 'ALL'
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-200 ring-1 ring-amber-500/50'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <div className="font-bold flex items-center justify-between">
+                        <span>All Employees</span>
+                        <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.2 rounded font-extrabold">
+                          {allUsers.length}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Company-wide</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -977,6 +987,7 @@ export const MeetingScheduler: React.FC = () => {
                   onChange={setSelectedEmails}
                   targetMode={targetMode}
                   onTargetModeChange={setTargetMode}
+                  allowAll={currentUser.role === 'ADMIN'}
                   themeColor="blue"
                   allOptionLabel="All Company Members"
                   specificOptionLabel="Select Specific Person(s)"

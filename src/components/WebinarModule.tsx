@@ -189,6 +189,10 @@ export const WebinarModule: React.FC = () => {
 
   const handleBroadcastMeetingLink = () => {
     if (!broadcastLinkWebinar) return;
+    if (currentUser.role !== 'ADMIN') {
+      alert('Unauthorized: Only administrators are permitted to broadcast webinar meeting links.');
+      return;
+    }
     setIsBroadcasting(true);
 
     try {
@@ -370,15 +374,17 @@ export const WebinarModule: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2.5">
-          {/* Quick Sudden Instant Email Trigger */}
-          <button
-            onClick={() => setInstantEmailOpen(true)}
-            className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-xs font-bold flex items-center shadow-sm active:scale-95 transition-all cursor-pointer"
-            title="Send an immediate broadcast email to all employees"
-          >
-            <Zap size={14} className="mr-1.5 text-yellow-200 animate-pulse" />
-            <span>Instant Email to All</span>
-          </button>
+          {/* Quick Sudden Instant Email Trigger (Admin Only) */}
+          {currentUser.role === 'ADMIN' && (
+            <button
+              onClick={() => setInstantEmailOpen(true)}
+              className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg text-xs font-bold flex items-center shadow-sm active:scale-95 transition-all cursor-pointer"
+              title="Send an immediate broadcast email to all employees (Admin Only)"
+            >
+              <Zap size={14} className="mr-1.5 text-yellow-200 animate-pulse" />
+              <span>Instant Email to All</span>
+            </button>
+          )}
 
           {/* Schedule Webinar Button (Admin) */}
           {currentUser.role === 'ADMIN' && (
@@ -557,8 +563,9 @@ export const WebinarModule: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Send meeting link button */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2.5">
+                  {/* Send meeting link button (Admin Only) */}
+                  {currentUser.role === 'ADMIN' && (
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 space-y-2.5">
                     
                     <button
                       onClick={() => {
@@ -572,6 +579,8 @@ export const WebinarModule: React.FC = () => {
                       <Mail size={13} />
                       <span>📧 Send Link via Email (All or Selected)</span>
                     </button>
+                  </div>
+                )}
 
                     {/* Actions Row */}
                     <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-slate-100 dark:border-slate-850">
@@ -624,9 +633,8 @@ export const WebinarModule: React.FC = () => {
                   </div>
 
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
 
@@ -670,25 +678,27 @@ export const WebinarModule: React.FC = () => {
                 )}
               </div>
 
-              {/* Company-Wide Broadcast Meeting Link Box */}
-              <div className="mt-5 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-r from-sky-500/10 via-nexora-blue/5 to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center">
-                    <Send size={13} className="mr-1.5 text-nexora-blue" />
-                    Broadcast Meeting Link to ALL Employees
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Sends the webinar joining link directly to all {allUsers.length} staff emails.
-                  </p>
+              {/* Company-Wide Broadcast Meeting Link Box (Admin Only) */}
+              {currentUser.role === 'ADMIN' && (
+                <div className="mt-5 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-r from-sky-500/10 via-nexora-blue/5 to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center">
+                      <Send size={13} className="mr-1.5 text-nexora-blue" />
+                      Broadcast Meeting Link to ALL Employees
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Sends the webinar joining link directly to all {allUsers.length} staff emails.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setBroadcastLinkWebinar(selectedWebinar)}
+                    className="px-3.5 py-1.5 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold flex items-center shrink-0 shadow-xs active:scale-95 transition-all"
+                  >
+                    <Mail size={13} className="mr-1.5" />
+                    Broadcast Link
+                  </button>
                 </div>
-                <button
-                  onClick={() => setBroadcastLinkWebinar(selectedWebinar)}
-                  className="px-3.5 py-1.5 bg-nexora-blue hover:bg-nexora-blue/90 text-white rounded-lg text-xs font-bold flex items-center shrink-0 shadow-xs active:scale-95 transition-all"
-                >
-                  <Mail size={13} className="mr-1.5" />
-                  Broadcast Link
-                </button>
-              </div>
+              )}
 
               {/* Details List */}
               <div className="mt-5 space-y-4">
@@ -851,18 +861,20 @@ export const WebinarModule: React.FC = () => {
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBroadcastLinkWebinar(selectedWebinar);
-                        setBroadcastTargetMode('ALL');
-                        setBroadcastSelectedEmails([]);
-                      }}
-                      className="px-3.5 py-2 border border-sky-200 dark:border-sky-850 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-nexora-blue dark:text-sky-400 rounded-lg text-xs font-semibold flex items-center transition-colors cursor-pointer"
-                      title="Email meeting link to all staff or select specific persons"
-                    >
-                      <Mail size={13} className="mr-1.5" /> Send Link via Email
-                    </button>
+                    {currentUser.role === 'ADMIN' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBroadcastLinkWebinar(selectedWebinar);
+                          setBroadcastTargetMode('ALL');
+                          setBroadcastSelectedEmails([]);
+                        }}
+                        className="px-3.5 py-2 border border-sky-200 dark:border-sky-850 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-nexora-blue dark:text-sky-400 rounded-lg text-xs font-semibold flex items-center transition-colors cursor-pointer"
+                        title="Email meeting link to all staff or select specific persons (Admin Only)"
+                      >
+                        <Mail size={13} className="mr-1.5" /> Send Link via Email
+                      </button>
+                    )}
 
                     <a
                       href={selectedWebinar.url}

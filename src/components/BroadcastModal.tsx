@@ -90,6 +90,10 @@ export const BroadcastModal: React.FC<BroadcastModalProps> = ({
   };
 
   const handleSend = () => {
+    if (currentUser.role !== 'ADMIN') {
+      alert('Unauthorized: Only administrators are permitted to send company-wide broadcasts.');
+      return;
+    }
     if (!title.trim()) {
       alert('Please enter a message title/subject.');
       return;

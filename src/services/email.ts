@@ -715,5 +715,76 @@ export class EmailService {
     `;
     this.sendMockEmail(to, subject, 'USER_ONBOARDING', body);
   }
+
+  // 17. Experience Certificate & Relieving Letter Email
+  static sendExperienceCertificateEmail(
+    to: string,
+    employeeName: string,
+    designation: string,
+    period: string,
+    certId: string,
+    verifyUrl: string,
+    signatoryName: string = 'Trivin'
+  ) {
+    const subject = `Official Experience Certificate & Relieving Letter — ${employeeName} [Ref: ${certId}]`;
+    const body = `
+      <div class="welcome">Dear ${employeeName},</div>
+      <p>We are pleased to issue your official <strong>Work Experience Certificate & Relieving Letter</strong> from <strong>Nexora Technologies</strong>.</p>
+      
+      <p>We sincerely appreciate your dedicated service, technical contributions, and professionalism during your tenure with us.</p>
+      
+      <div class="details-card">
+        <div class="details-row">
+          <div class="label">Document Ref No.</div>
+          <div class="value" style="font-family: monospace; font-weight: bold; color: #0878C9;">${certId}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Employee Name</div>
+          <div class="value" style="font-weight: 700; color: #06152F;">${employeeName}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Designation</div>
+          <div class="value">${designation}</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Tenure Duration</div>
+          <div class="value" style="font-weight: 600;">${period} (2 Months)</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Authorized Signatory</div>
+          <div class="value">${signatoryName} (Founder & Managing Director, Nexora Technologies)</div>
+        </div>
+        <div class="details-row" style="margin-top: 10px;">
+          <div class="label">Verification Status</div>
+          <div class="value" style="color: #059669; font-weight: bold;">✔ Digitally Signed & Authenticated</div>
+        </div>
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px; margin: 24px 0; text-align: center;">
+        <div style="font-weight: 700; color: #0F172A; font-size: 14px; margin-bottom: 6px;">Official Digital Certificate</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-bottom: 16px;">
+          Your certificate includes the official company seal, founder signature, and a dynamic QR code for instant third-party authenticity verification.
+        </div>
+        <div class="btn-container" style="margin: 10px 0;">
+          <a href="${verifyUrl}" class="btn" target="_blank" style="background-color: #0878C9; color: #ffffff !important; text-decoration: none; font-weight: 600; padding: 12px 28px; border-radius: 6px; display: inline-block;">
+            View & Download Certificate (PDF)
+          </a>
+        </div>
+        <div style="font-size: 11px; color: #94A3B8; margin-top: 8px;">
+          Direct Verification Link: <a href="${verifyUrl}" style="color: #0878C9;">${verifyUrl}</a>
+        </div>
+      </div>
+
+      <p>All official obligations, company handovers, and clearance formalities have been completed. We wish you immense success, continuous growth, and fulfillment in all your future endeavors.</p>
+      
+      <p style="margin-top: 20px;">
+        Warm regards,<br>
+        <strong>Nexora Technologies Human Resources & Executive Office</strong><br>
+        <span style="font-size: 12px; color: #64748B;">Email: contactnexoratechs@gmail.com | connect@mail.nexoratechs.xyz</span>
+      </p>
+    `;
+    this.sendMockEmail(to, subject, 'EXPERIENCE_CERTIFICATE', body);
+  }
 }
+
 

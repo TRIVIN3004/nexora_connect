@@ -89,9 +89,19 @@ export const InstantMeetingModal: React.FC<InstantMeetingModalProps> = ({
       return;
     }
 
-    const participants = targetMode === 'ALL' ? ['all'] : selectedEmails;
-    if (targetMode === 'SPECIFIC' && participants.length === 0) {
-      setStatusMessage({ type: 'error', text: 'Please select at least one person or choose All Company Members.' });
+    const isAll = currentUser.role === 'ADMIN' && targetMode === 'ALL';
+    const participants = isAll ? ['all'] : selectedEmails;
+
+    if (targetMode === 'ALL' && currentUser.role !== 'ADMIN') {
+      setStatusMessage({
+        type: 'error',
+        text: 'Unauthorized: Only administrators are permitted to broadcast instant meeting links to all employees.'
+      });
+      return;
+    }
+
+    if (!isAll && participants.length === 0) {
+      setStatusMessage({ type: 'error', text: 'Please select at least one colleague to invite.' });
       return;
     }
 
@@ -134,13 +144,13 @@ export const InstantMeetingModal: React.FC<InstantMeetingModalProps> = ({
           platform: platform,
           organizerName: currentUser.name,
           organizerEmail: currentUser.email,
-          participantEmails: targetMode === 'ALL' ? ['all'] : selectedEmails,
+          participantEmails: isAll ? ['all'] : selectedEmails,
           customNote: customNote.trim() || undefined,
-          isAll: targetMode === 'ALL'
+          isAll: isAll
         });
       }
 
-      const countText = targetMode === 'ALL' ? `all ${allUsers.length} members` : `${selectedEmails.length} selected attendee(s)`;
+      const countText = isAll ? `all ${allUsers.length} members` : `${selectedEmails.length} selected attendee(s)`;
       setStatusMessage({
         type: 'success',
         text: `🚀 Instant meeting launched! Invitations dispatched to ${countText}. Redirecting to call...`
@@ -299,6 +309,7 @@ export const InstantMeetingModal: React.FC<InstantMeetingModalProps> = ({
               onChange={setSelectedEmails}
               targetMode={targetMode}
               onTargetModeChange={setTargetMode}
+              allowAll={currentUser.role === 'ADMIN'}
               themeColor="amber"
               allOptionLabel="All Company Members"
               specificOptionLabel="Select Specific Person(s)"

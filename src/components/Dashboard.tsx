@@ -8,19 +8,22 @@ import {
   ArrowRight, 
   Clock, 
   User, 
-  ExternalLink,
-  PlusCircle,
-  HelpCircle,
-  FileText,
-  Megaphone,
-  Pin,
-  Check
+  ExternalLink, 
+  PlusCircle, 
+  HelpCircle, 
+  FileText, 
+  Megaphone, 
+  Pin, 
+  Check,
+  Award
 } from 'lucide-react';
 import { BroadcastModal } from './BroadcastModal';
+import { ExperienceCertificateModal } from './ExperienceCertificateModal';
 
 export const Dashboard: React.FC = () => {
   const { db, dispatcher, currentUser, setCurrentTab, triggerRefresh } = useApp();
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -97,12 +100,21 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => setIsBroadcastModalOpen(true)}
-              className="px-4 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/20 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+              onClick={() => setIsCertModalOpen(true)}
+              className="px-4 py-2.5 bg-gradient-to-r from-amber-500/20 to-sky-500/20 hover:from-amber-500/30 hover:to-sky-500/30 backdrop-blur-md text-white border border-amber-400/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-lg shadow-amber-500/10"
             >
-              <Megaphone size={14} className="text-yellow-300" />
-              <span>Broadcast to All</span>
+              <Award size={15} className="text-amber-300" />
+              <span>Experience Certificate</span>
             </button>
+            {currentUser.role === 'ADMIN' && (
+              <button
+                onClick={() => setIsBroadcastModalOpen(true)}
+                className="px-4 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/20 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Megaphone size={14} className="text-yellow-300" />
+                <span>Broadcast to All</span>
+              </button>
+            )}
             <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/15">
               <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-ping"></span>
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-100">
@@ -134,12 +146,14 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setIsBroadcastModalOpen(true)}
-                className="text-xs font-bold text-nexora-blue dark:text-nexora-electric hover:underline flex items-center"
-              >
-                + Send Message to All
-              </button>
+              {currentUser.role === 'ADMIN' && (
+                <button
+                  onClick={() => setIsBroadcastModalOpen(true)}
+                  className="text-xs font-bold text-nexora-blue dark:text-nexora-electric hover:underline flex items-center cursor-pointer"
+                >
+                  + Send Message to All
+                </button>
+              )}
               <button
                 onClick={() => setCurrentTab('broadcasts')}
                 className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1"
@@ -573,6 +587,17 @@ export const Dashboard: React.FC = () => {
         </div>
 
       </div>
+
+      <BroadcastModal 
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+      />
+
+      <ExperienceCertificateModal
+        isOpen={isCertModalOpen}
+        onClose={() => setIsCertModalOpen(false)}
+        employeeName={currentUser.email === 'akshuraj2005@gmail.com' ? currentUser.name : 'Akshaya R'}
+      />
 
     </div>
   );

@@ -25,6 +25,7 @@ export interface PersonSelectorProps {
   themeColor?: 'blue' | 'amber' | 'purple' | 'emerald';
   allowCustomEmail?: boolean;
   maxListHeight?: string;
+  allowAll?: boolean;
 }
 
 export const PersonSelector: React.FC<PersonSelectorProps> = ({
@@ -38,7 +39,8 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
   specificOptionDescription = 'Choose specific individual team members or custom attendees',
   themeColor = 'blue',
   allowCustomEmail = true,
-  maxListHeight = 'max-h-48'
+  maxListHeight = 'max-h-48',
+  allowAll = true
 }) => {
   const { db } = useApp();
   const allUsers: User[] = db.getUsers();
@@ -161,30 +163,47 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
     <div className="space-y-3">
       {/* 1. Selection Mode Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <button
-          type="button"
-          onClick={() => onTargetModeChange('ALL')}
-          className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-            targetMode === 'ALL'
-              ? currentTheme.borderActive + ' shadow-xs ring-1 ring-inset'
-              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center space-x-2 font-bold text-xs">
-              <Users size={15} />
-              <span>{allOptionLabel}</span>
+        {allowAll ? (
+          <button
+            type="button"
+            onClick={() => onTargetModeChange('ALL')}
+            className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              targetMode === 'ALL'
+                ? currentTheme.borderActive + ' shadow-xs ring-1 ring-inset'
+                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center space-x-2 font-bold text-xs">
+                <Users size={15} />
+                <span>{allOptionLabel}</span>
+              </div>
+              <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                targetMode === 'ALL' ? currentTheme.badge : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+              }`}>
+                {allUsers.length} Persons
+              </span>
             </div>
-            <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-              targetMode === 'ALL' ? currentTheme.badge : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-            }`}>
-              {allUsers.length} Persons
-            </span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+              {allOptionDescription}
+            </p>
+          </button>
+        ) : (
+          <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30 text-left flex flex-col justify-between opacity-75">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center space-x-2 font-bold text-xs text-slate-500 dark:text-slate-400">
+                <Users size={15} />
+                <span>{allOptionLabel}</span>
+              </div>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center">
+                <Shield size={10} className="mr-1" /> Admin Only
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+              Broadcasting meeting links / emails to all employees is reserved for administrators.
+            </p>
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-            {allOptionDescription}
-          </p>
-        </button>
+        )}
 
         <button
           type="button"
@@ -219,22 +238,26 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
           {/* Quick Filter Shortcuts */}
           <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-200/70 dark:border-slate-800">
             <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleSelectAll}
-                className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-              >
-                <CheckCheck size={11} className="inline mr-1 -mt-0.5" />
-                Select All ({allUsers.length})
-              </button>
-              <button
-                type="button"
-                onClick={handleSelectEmployeesOnly}
-                className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-              >
-                <Briefcase size={11} className="inline mr-1 -mt-0.5" />
-                Employees
-              </button>
+              {allowAll && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSelectAll}
+                    className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                  >
+                    <CheckCheck size={11} className="inline mr-1 -mt-0.5" />
+                    Select All ({allUsers.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSelectEmployeesOnly}
+                    className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                  >
+                    <Briefcase size={11} className="inline mr-1 -mt-0.5" />
+                    Employees
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={handleSelectAdminsOnly}

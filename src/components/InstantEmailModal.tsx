@@ -38,7 +38,7 @@ export const InstantEmailModal: React.FC<InstantEmailModalProps> = ({
   const allUsers = db.getUsers();
 
   const [targetType, setTargetType] = useState<'ALL' | 'SPECIFIC'>(
-    initialTargetEmails.length > 0 ? 'SPECIFIC' : 'ALL'
+    initialTargetEmails.length > 0 ? 'SPECIFIC' : (currentUser.role === 'ADMIN' ? 'ALL' : 'SPECIFIC')
   );
   const [selectedUserEmails, setSelectedUserEmails] = useState<string[]>(initialTargetEmails);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -158,6 +158,12 @@ export const InstantEmailModal: React.FC<InstantEmailModalProps> = ({
 
     try {
       if (targetType === 'ALL') {
+        if (currentUser.role !== 'ADMIN') {
+          setIsSending(false);
+          alert('Unauthorized: Only administrators have permission to send broadcast emails to all employees.');
+          return;
+        }
+
         // Dispatch to all
         dispatcher.dispatchInstantEmailToAll(
           subject.trim(),
@@ -276,26 +282,43 @@ export const InstantEmailModal: React.FC<InstantEmailModalProps> = ({
             </label>
             
             <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => setTargetType('ALL')}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  targetType === 'ALL'
-                    ? 'border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-200 shadow-xs'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center space-x-2 font-bold text-xs">
-                    <Users size={15} className="text-amber-500" />
-                    <span>All Employees</span>
+              {currentUser.role === 'ADMIN' ? (
+                <button
+                  type="button"
+                  onClick={() => setTargetType('ALL')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    targetType === 'ALL'
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-200 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center space-x-2 font-bold text-xs">
+                      <Users size={15} className="text-amber-500" />
+                      <span>All Employees</span>
+                    </div>
+                    {targetType === 'ALL' && <Check size={14} className="text-amber-500" />}
                   </div>
-                  {targetType === 'ALL' && <Check size={14} className="text-amber-500" />}
+                  <p className="text-[11px] text-slate-450 dark:text-slate-500">
+                    Broadcast to all {allUsers.length} active company staff
+                  </p>
+                </button>
+              ) : (
+                <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30 text-left opacity-75">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center space-x-2 font-bold text-xs text-slate-500 dark:text-slate-400">
+                      <Users size={15} />
+                      <span>All Employees</span>
+                    </div>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center">
+                      <ShieldAlert size={10} className="mr-1" /> Admin Only
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
+                    Broadcasting emails to all staff is reserved for administrators.
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-450 dark:text-slate-500">
-                  Broadcast to all {allUsers.length} active company staff
-                </p>
-              </button>
+              )}
 
               <button
                 type="button"
@@ -326,26 +349,30 @@ export const InstantEmailModal: React.FC<InstantEmailModalProps> = ({
                 {/* Quick Selection Shortcuts */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-2 border-slate-200/60 dark:border-slate-800">
                   <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleSelectAll}
-                      className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-                    >
-                      Select All ({allUsers.length})
-                    </button>
+                    {currentUser.role === 'ADMIN' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleSelectAll}
+                          className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                        >
+                          Select All ({allUsers.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSelectEmployeesOnly}
+                          className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                        >
+                          Employees Only
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
                       onClick={handleSelectAdminsOnly}
                       className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                     >
                       Admins Only
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSelectEmployeesOnly}
-                      className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-                    >
-                      Employees Only
                     </button>
                     {selectedUserEmails.length > 0 && (
                       <button

@@ -140,13 +140,15 @@ export const CompanyBroadcasts: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-5 py-3 bg-white hover:bg-slate-100 text-[#06152F] font-bold text-xs md:text-sm rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] cursor-pointer shrink-0"
-          >
-            <PlusCircle size={17} className="text-nexora-blue" />
-            <span>Broadcast Message to All</span>
-          </button>
+          {currentUser.role === 'ADMIN' && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-5 py-3 bg-white hover:bg-slate-100 text-[#06152F] font-bold text-xs md:text-sm rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] cursor-pointer shrink-0"
+            >
+              <PlusCircle size={17} className="text-nexora-blue" />
+              <span>Broadcast Message to All</span>
+            </button>
+          )}
         </div>
       </div>
 
