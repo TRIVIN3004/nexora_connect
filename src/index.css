@@ -177,3 +177,36 @@
   aspect-ratio: 1;
   min-height: 80px;
 }
+
+/* Certificate Web View Print Styling */
+@media print {
+  @page {
+    margin: 0.25in;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #certificate-webview-overlay,
+  #certificate-webview-overlay * {
+    visibility: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #certificate-webview-overlay {
+    position: static !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  #certificate-webview-overlay .print-hide {
+    display: none !important;
+  }
+  #certificate-print-sheet {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

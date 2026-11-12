@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/certificates/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -32,12 +32,18 @@ const AppContent: React.FC = () => {
   const { currentTab, setCurrentTab, searchQuery, setSearchQuery, db, currentUser } = useApp();
   const initialVerifyQuery = React.useMemo(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('verify') || params.get('ref') || params.get('id') || '';
+    const paramQuery = params.get('verify') || params.get('ref') || params.get('id') || '';
+    if (paramQuery) return paramQuery;
+    if (window.location.pathname.startsWith('/certificates/')) {
+      return window.location.pathname;
+    }
+    return '';
   }, []);
 
+  const [showPublicVerify, setShowPublicVerify] = React.useState<boolean>(() => Boolean(initialVerifyQuery));
   const [authView, setAuthView] = React.useState<'verify' | 'login' | 'register'>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('verify') || params.get('ref') || params.get('id')) {
+    if (params.get('verify') || params.get('ref') || params.get('id') || window.location.pathname.startsWith('/certificates/')) {
       return 'verify';
     }
     const viewParam = params.get('view');
@@ -54,6 +60,18 @@ const AppContent: React.FC = () => {
     window.addEventListener('setTab_editor', handleSetTabEditor);
     return () => window.removeEventListener('setTab_editor', handleSetTabEditor);
   }, [setCurrentTab]);
+
+  // Allow direct QR verification URLs even when already logged in
+  if (currentUser && currentUser.email !== 'guest@nexoratechs.com' && showPublicVerify) {
+    return (
+      <DigitalVerification
+        initialQuery={initialVerifyQuery}
+        isAuthenticated
+        onNavigateLogin={() => setShowPublicVerify(false)}
+        onNavigateRegister={() => setShowPublicVerify(false)}
+      />
+    );
+  }
 
   // Show public Digital Verification portal first, with seamless navigation to login/register
   if (!currentUser || currentUser.email === 'guest@nexoratechs.com') {

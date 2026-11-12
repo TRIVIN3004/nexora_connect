@@ -12,6 +12,7 @@ import {
   FileText,
   ImagePlus,
   LogIn,
+  Printer,
   QrCode,
   RefreshCw,
   Search,
@@ -26,11 +27,13 @@ import {
   resolveVerificationQuery,
   type VerifiedCredentialRecord,
 } from '../data/credentialsRegistry';
+import { CertificateWebViewModal } from './CertificateWebViewModal';
 
 interface DigitalVerificationProps {
   onNavigateLogin: () => void;
   onNavigateRegister: () => void;
   initialQuery?: string;
+  isAuthenticated?: boolean;
 }
 
 type VerifyMode = 'scanner' | 'upload' | 'manual';
@@ -39,6 +42,7 @@ export const DigitalVerification: React.FC<DigitalVerificationProps> = ({
   onNavigateLogin,
   onNavigateRegister,
   initialQuery = '',
+  isAuthenticated = false,
 }) => {
   const [mode, setMode] = useState<VerifyMode>(initialQuery ? 'manual' : 'scanner');
   const [searchInput, setSearchInput] = useState(initialQuery);
@@ -46,6 +50,8 @@ export const DigitalVerification: React.FC<DigitalVerificationProps> = ({
   const [extractedQuery, setExtractedQuery] = useState('');
   const [results, setResults] = useState<VerifiedCredentialRecord[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [webViewRecord, setWebViewRecord] = useState<VerifiedCredentialRecord | null>(null);
+  const [autoPrintWebView, setAutoPrintWebView] = useState(false);
 
   // Camera Scanner states
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -286,21 +292,23 @@ export const DigitalVerification: React.FC<DigitalVerificationProps> = ({
           </div>
 
           <div className="flex items-center space-x-2.5">
-            <button
-              type="button"
-              onClick={onNavigateRegister}
-              className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
-            >
-              <UserPlus size={14} />
-              <span className="hidden sm:inline">Register Profile</span>
-            </button>
+            {!isAuthenticated && (
+              <button
+                type="button"
+                onClick={onNavigateRegister}
+                className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+              >
+                <UserPlus size={14} />
+                <span className="hidden sm:inline">Register Profile</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onNavigateLogin}
               className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-nexora-blue to-nexora-electric text-white text-xs font-bold shadow-md shadow-nexora-blue/25 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
             >
               <LogIn size={14} />
-              <span>Workspace Login</span>
+              <span>{isAuthenticated ? 'Return to Workspace' : 'Workspace Login'}</span>
             </button>
           </div>
         </div>
@@ -684,26 +692,28 @@ export const DigitalVerification: React.FC<DigitalVerificationProps> = ({
                           </span>
 
                           <div className="flex flex-wrap items-center gap-2">
-                            {rec.htmlUrl && (
-                              <a
-                                href={rec.htmlUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors"
-                              >
-                                <ExternalLink size={13} />
-                                <span>Open Web View</span>
-                              </a>
-                            )}
-                            <a
-                              href={rec.pdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-nexora-blue hover:bg-nexora-blue/90 text-white text-xs font-bold shadow-xs transition-colors"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAutoPrintWebView(false);
+                                setWebViewRecord(rec);
+                              }}
+                              className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-nexora-blue hover:bg-nexora-blue/90 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
                             >
-                              <FileText size={13} />
-                              <span>View Official PDF</span>
-                            </a>
+                              <ExternalLink size={13} />
+                              <span>Open Web View</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAutoPrintWebView(true);
+                                setWebViewRecord(rec);
+                              }}
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                            >
+                              <Printer size={13} />
+                              <span>Print / Save PDF</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -760,10 +770,19 @@ export const DigitalVerification: React.FC<DigitalVerificationProps> = ({
             className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-xl bg-gradient-to-r from-nexora-blue to-nexora-electric text-white text-xs font-bold shadow-md hover:scale-[1.02] transition-all cursor-pointer shrink-0"
           >
             <LogIn size={15} />
-            <span>Proceed to Login Page</span>
+            <span>{isAuthenticated ? 'Return to Workspace' : 'Proceed to Login Page'}</span>
           </button>
         </div>
       </main>
+
+      <CertificateWebViewModal
+        record={webViewRecord}
+        autoPrint={autoPrintWebView}
+        onClose={() => {
+          setWebViewRecord(null);
+          setAutoPrintWebView(false);
+        }}
+      />
     </div>
   );
 };
