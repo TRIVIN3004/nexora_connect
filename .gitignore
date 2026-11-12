@@ -28,3 +28,10 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Issued certificates, offer letters, and local HR documents
+public/certificates/
+internship offer letters/
+Gonexora_Techs_*.pdf
+public/Gonexora_Techs_*.pdf
+public/sample_certificate_preview*.png
+

@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import { 
   Search, 
   Video, 
-  Download, 
   Play, 
   Plus, 
   Calendar, 
@@ -12,7 +11,8 @@ import {
   AlertCircle,
   X,
   Sparkles,
-  Trash2
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import type { Recording } from '../services/database';
 import { AIService } from '../services/ai';
@@ -279,16 +279,17 @@ export const RecordingsLibrary: React.FC = () => {
                     >
                       Watch
                     </button>
-                    
-                    {/* Simulated Download button */}
-                    <button
-                      onClick={() => alert(`Initiating secure corporate download for: ${rec.title}`)}
-                      className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg cursor-pointer transition-colors"
-                      title="Download Secure Copy"
-                    >
-                      <Download size={14} />
-                    </button>
 
+                    <a
+                      href={rec.recordingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-nexora-blue dark:hover:text-nexora-electric rounded-lg cursor-pointer transition-colors"
+                      title="Open recording directly in new tab"
+                    >
+                      <ExternalLink size={14} />
+                    </a>
+                    
                     {/* Delete Recording Button (Admin or Organizer) */}
                     {currentUser.role === 'ADMIN' && (
                       <button
@@ -333,12 +334,26 @@ export const RecordingsLibrary: React.FC = () => {
               <div className="relative flex-1 bg-slate-900 rounded-lg overflow-hidden my-4 border border-white/5 flex flex-col items-center justify-center">
                 <img src={activeRecording.thumbnail} alt="video thumb" className="absolute inset-0 w-full h-full object-cover opacity-30 blur-xs" />
                 <div className="relative z-10 text-center space-y-3.5 p-6">
-                  <div className="w-16 h-16 bg-nexora-blue hover:bg-nexora-blue/90 hover:scale-105 rounded-full flex items-center justify-center cursor-pointer shadow-lg mx-auto transition-all">
-                    <Play size={26} fill="currentColor" className="ml-1" />
-                  </div>
+                  <a 
+                    href={activeRecording.recordingUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-16 h-16 bg-nexora-blue hover:bg-nexora-blue/90 hover:scale-105 rounded-full flex items-center justify-center cursor-pointer shadow-lg mx-auto transition-all"
+                    title="Watch Recording"
+                  >
+                    <Play size={26} fill="currentColor" className="ml-1 text-white" />
+                  </a>
                   <div>
                     <p className="text-sm font-bold text-white">{activeRecording.title}</p>
-                    <p className="text-xs text-slate-400 mt-1">Simulating player connection to external server. Duration: {activeRecording.duration}</p>
+                    <p className="text-xs text-slate-400 mt-1">Duration: {activeRecording.duration || 'Full Session'}</p>
+                    <a
+                      href={activeRecording.recordingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center mt-3 px-3.5 py-1.5 bg-nexora-blue hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors shadow"
+                    >
+                      <ExternalLink size={13} className="mr-1.5" /> Watch on Google Drive
+                    </a>
                   </div>
                 </div>
               </div>
@@ -430,12 +445,14 @@ export const RecordingsLibrary: React.FC = () => {
               </div>
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex space-x-2">
-                <button
-                  onClick={() => alert(`Initiating secure download...`)}
-                  className="flex-1 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                <a
+                  href={activeRecording.recordingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white border border-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-sm"
                 >
-                  <Download size={14} className="mr-1.5" /> Download (.mp4)
-                </button>
+                  <ExternalLink size={14} className="mr-1.5 text-nexora-electric" /> Open / Download Recording
+                </a>
 
                 {currentUser.role === 'ADMIN' && (
                   <button

@@ -40,7 +40,7 @@ const defaultPresentEmails = [
   'cathrinemary0208@gmail.com',
   'sangamithrakesavan8@gmail.com',
   'vishwakrish2006@gmail.com',
-  'keerthivasan@gmail.com'
+  'keerthivasan30112005@gmail.com'
 ];
 
 interface StudentRosterItem {
@@ -224,7 +224,7 @@ export const AttendanceManager: React.FC = () => {
           matchedUserEmails.add('cathrinemary0208@gmail.com');
           foundMatch = true;
         } else if (token.includes('keerthi') || token.includes('keerthivasan')) {
-          matchedUserEmails.add('keerthivasan@gmail.com');
+          matchedUserEmails.add('keerthivasan30112005@gmail.com');
           foundMatch = true;
         } else if (token.includes('irene') || token.includes('clemencia')) {
           matchedUserEmails.add('ireneclemencia2311@gmail.com');

@@ -119,16 +119,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between mb-8 px-2">
             <div className="flex items-center space-x-3">
               <img 
-                src="/logo.jpg" 
-                alt="Nexora Connect Logo" 
-                className="w-10 h-10 object-contain rounded-xl shadow-md border border-slate-200 dark:border-slate-800 bg-white p-0.5" 
+                src="/gonexora_logo.png" 
+                alt="Gonexora Techs Logo" 
+                className="w-10 h-10 object-contain rounded-xl shadow-md border border-slate-700 bg-black p-0.5" 
               />
               <div>
-                <span className="font-heading font-extrabold text-lg tracking-wider text-slate-900 dark:text-white">
-                  NEXORA
+                <span className="font-heading font-extrabold text-base tracking-wider text-slate-900 dark:text-white block leading-tight">
+                  GONEXORA
                 </span>
-                <span className="font-heading font-semibold text-xs block text-nexora-blue dark:text-nexora-electric tracking-widest mt-[-2px]">
-                  CONNECT
+                <span className="font-heading font-bold text-[11px] block text-nexora-blue dark:text-nexora-electric tracking-widest uppercase">
+                  TECHS
                 </span>
               </div>
             </div>

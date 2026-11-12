@@ -8,14 +8,16 @@ import {
   ChevronRight,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  QrCode
 } from 'lucide-react';
 
 interface LoginProps {
   onToggleView: () => void;
+  onOpenVerification?: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
+export const Login: React.FC<LoginProps> = ({ onToggleView, onOpenVerification }) => {
   const { db, setCurrentUser, setCurrentTab, triggerRefresh, setTheme } = useApp();
 
   // Form states
@@ -84,9 +86,9 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
       <div className="mb-6 text-center flex flex-col items-center">
         <div className="relative mb-3">
           <img 
-            src="/logo.jpg" 
-            alt="Nexora Connect Logo" 
-            className="w-16 h-16 object-contain rounded-2xl shadow-md border border-slate-200 bg-white p-1" 
+            src="/gonexora_logo.png" 
+            alt="Gonexora Techs Logo" 
+            className="w-16 h-16 object-contain rounded-2xl shadow-lg border border-slate-700 bg-black p-1" 
           />
           <span className="absolute -bottom-1 -right-1 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -94,10 +96,10 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
-          Welcome Back
+          Welcome to Gonexora Techs
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Sign in to access your Nexora Connect workspace
+          Sign in to access your Gonexora Techs workspace & collaboration portal
         </p>
       </div>
 
@@ -209,6 +211,19 @@ export const Login: React.FC<LoginProps> = ({ onToggleView }) => {
             Register Profile
           </button>
         </div>
+
+        {onOpenVerification && (
+          <div className="mt-3 pt-3 border-t border-slate-100 text-center">
+            <button
+              type="button"
+              onClick={onOpenVerification}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-nexora-blue transition-colors cursor-pointer"
+            >
+              <QrCode size={14} />
+              Verify Credentials via QR Scanner
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

@@ -15,6 +15,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { StressReliefGames } from './components/StressReliefGames';
 import { RegisterProfile } from './components/RegisterProfile';
 import { Login } from './components/Login';
+import { DigitalVerification } from './components/DigitalVerification';
 import { CompanyBroadcasts } from './components/CompanyBroadcasts';
 import { 
   Search, 
@@ -29,7 +30,21 @@ import {
 
 const AppContent: React.FC = () => {
   const { currentTab, setCurrentTab, searchQuery, setSearchQuery, db, currentUser } = useApp();
-  const [authView, setAuthView] = React.useState<'login' | 'register'>('login');
+  const initialVerifyQuery = React.useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('verify') || params.get('ref') || params.get('id') || '';
+  }, []);
+
+  const [authView, setAuthView] = React.useState<'verify' | 'login' | 'register'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verify') || params.get('ref') || params.get('id')) {
+      return 'verify';
+    }
+    const viewParam = params.get('view');
+    if (viewParam === 'login') return 'login';
+    if (viewParam === 'register') return 'register';
+    return 'verify';
+  });
 
   // Listen to custom tab event from Knowledge Library redirects
   useEffect(() => {
@@ -40,23 +55,47 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('setTab_editor', handleSetTabEditor);
   }, [setCurrentTab]);
 
-  // Block dashboard and show login/register view if guest
+  // Show public Digital Verification portal first, with seamless navigation to login/register
   if (!currentUser || currentUser.email === 'guest@nexoratechs.com') {
+    if (authView === 'verify') {
+      return (
+        <DigitalVerification
+          initialQuery={initialVerifyQuery}
+          onNavigateLogin={() => setAuthView('login')}
+          onNavigateRegister={() => setAuthView('register')}
+        />
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-100 text-slate-800 flex items-center justify-center p-4 selection:bg-nexora-blue/20">
         {authView === 'login' ? (
-          <Login onToggleView={() => setAuthView('register')} />
+          <Login
+            onToggleView={() => setAuthView('register')}
+            onOpenVerification={() => setAuthView('verify')}
+          />
         ) : (
           <div className="w-full max-w-xl">
             <RegisterProfile />
-            <div className="mt-4 text-center text-xs text-slate-500">
-              Already have an account?{' '}
-              <button
-                onClick={() => setAuthView('login')}
-                className="text-nexora-blue hover:underline font-bold cursor-pointer"
-              >
-                Sign In
-              </button>
+            <div className="mt-4 text-center text-xs text-slate-500 space-y-2">
+              <div>
+                Already have an account?{' '}
+                <button
+                  onClick={() => setAuthView('login')}
+                  className="text-nexora-blue hover:underline font-bold cursor-pointer"
+                >
+                  Sign In
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setAuthView('verify')}
+                  className="text-slate-600 hover:text-nexora-blue hover:underline font-semibold cursor-pointer"
+                >
+                  Verify Credentials via QR Scanner
+                </button>
+              </div>
             </div>
           </div>
         )}

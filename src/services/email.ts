@@ -26,58 +26,62 @@ export class EmailService {
         <meta charset="utf-8">
         <style>
           body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #F8FAFC;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F1F5F9;
             margin: 0;
             padding: 0;
             -webkit-font-smoothing: antialiased;
+            color: #0F172A;
           }
           .container {
             max-width: 600px;
-            margin: 20px auto;
+            margin: 30px auto;
             background-color: #FFFFFF;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
             border: 1px solid #E2E8F0;
           }
           .header {
-            background-color: #06152F;
-            padding: 30px;
+            background-color: #FFFFFF;
+            padding: 30px 24px 20px 24px;
             text-align: center;
-            border-bottom: 3px solid #0878C9;
+            border-bottom: 1px solid #E2E8F0;
           }
           .header h1 {
-            color: #FFFFFF;
+            color: #0F172A;
             margin: 0;
-            font-size: 24px;
-            font-weight: 700;
+            font-size: 22px;
+            font-weight: 900;
             letter-spacing: 0.5px;
           }
           .header p {
-            color: #16B9FF;
-            margin: 5px 0 0 0;
-            font-size: 14px;
+            color: #64748B;
+            margin: 4px 0 0 0;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
+            font-weight: 700;
           }
           .content {
-            padding: 40px 30px;
+            padding: 36px 30px;
             color: #334155;
-            line-height: 1.6;
+            line-height: 1.65;
           }
           .welcome {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 18px;
             color: #0F172A;
           }
           .details-card {
-            background-color: #F1F5F9;
-            border-left: 4px solid #0878C9;
-            border-radius: 4px;
+            background-color: #F8FAFC;
+            border-left: 4px solid #0F172A;
+            border: 1px solid #E2E8F0;
+            border-left-width: 4px;
+            border-radius: 8px;
             padding: 20px;
-            margin: 25px 0;
+            margin: 24px 0;
           }
           .details-row {
             margin-bottom: 10px;
@@ -86,63 +90,67 @@ export class EmailService {
             margin-bottom: 0;
           }
           .label {
-            font-weight: bold;
-            color: #475569;
+            font-weight: 800;
+            color: #64748B;
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            font-size: 10.5px;
+            letter-spacing: 0.8px;
           }
           .value {
             color: #0F172A;
             font-size: 14px;
             margin-top: 2px;
+            font-weight: 600;
           }
           .btn-container {
             text-align: center;
             margin: 30px 0;
           }
           .btn {
-            background-color: #0878C9;
+            background-color: #0F172A;
             color: #FFFFFF !important;
-            padding: 12px 30px;
+            padding: 13px 32px;
             text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
+            border-radius: 8px;
+            font-weight: 700;
             font-size: 14px;
             display: inline-block;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
             transition: background-color 0.2s;
           }
           .btn:hover {
-            background-color: #0660A3;
+            background-color: #1E293B;
           }
           .footer {
             background-color: #F8FAFC;
-            padding: 20px 30px;
+            padding: 24px 30px;
             text-align: center;
             border-top: 1px solid #E2E8F0;
             color: #64748B;
-            font-size: 12px;
+            font-size: 11.5px;
           }
           .footer-logo {
-            font-weight: bold;
-            color: #06152F;
-            margin-bottom: 5px;
+            font-weight: 800;
+            color: #0F172A;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            font-size: 12.5px;
           }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>NEXORA CONNECT</h1>
-            <p>Learn. Collaborate. Share. Grow.</p>
+            <h1>GONEXORA TECHS</h1>
+            <p>Building Tomorrow, Today.</p>
           </div>
           <div class="content">
             ${bodyContent}
           </div>
           <div class="footer">
-            <div class="footer-logo">NEXORA TECHNOLOGIES</div>
+            <div class="footer-logo">GONEXORA TECHS</div>
             <div>Building Tomorrow, Today.</div>
-            <div style="margin-top: 10px;">This is an automated notification. Please do not reply directly to this email.</div>
+            <div style="margin-top: 8px; color: #94A3B8; font-size: 10.5px;">This is an official automated communication from Gonexora Techs.</div>
           </div>
         </div>
       </body>
@@ -176,7 +184,7 @@ export class EmailService {
 
     const recipient = to.trim();
     const emailPayload = {
-      from: `Nexora Connect <${fromAddress}>`,
+      from: `Gonexora Techs <${fromAddress}>`,
       to: [recipient],
       reply_to: 'contactnexoratechs@gmail.com',
       subject: subject,
@@ -1041,6 +1049,131 @@ export class EmailService {
       </p>
     `;
     return this.sendRealEmailAsync(adminEmail, subject, 'ATTENDANCE_ADMIN_REPORT', body);
+  }
+
+  // 14. Mandatory General Meeting Broadcast with Attractive Theme & Live Countdown
+  static sendMandatoryGeneralMeetingInvitation(
+    to: string,
+    userName: string,
+    meetingUrl: string = 'https://meet.google.com/zwe-epas-bme',
+    dateTimeStr: string = 'Today, 8:00 PM – 09:00 PM IST',
+    customAgenda?: string
+  ) {
+    const subject = `🚨 MANDATORY: General Meeting Tonight at 8:00 PM — Critical Company Updates [Google Meet]`;
+    const calendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Nexora+Company-Wide+General+Meeting+(MANDATORY)&dates=20261002T143000Z/20261002T153000Z&details=Nexora+Company-Wide+General+Meeting+to+discuss+critical+organizational+information+and+updates.+Attendance+is+strictly+mandatory+for+all+employees.+Direct+Google+Meet+Link:+${encodeURIComponent(meetingUrl)}&location=${encodeURIComponent(meetingUrl)}`;
+
+    const body = `
+      <div style="background: linear-gradient(135deg, #0B0F19 0%, #111827 100%); color: #E2E8F0; padding: 25px; border-radius: 12px; margin: -20px -10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+          <span style="display: inline-block; background: rgba(14, 165, 233, 0.2); border: 1px solid #38BDF8; color: #38BDF8; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 14px; border-radius: 9999px;">
+            ⚡ OFFICIAL GENERAL ALL-HANDS • NEXORA CONNECT
+          </span>
+          <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 800; margin: 12px 0 4px 0;">MANDATORY GENERAL MEETING</h2>
+          <p style="color: #93C5FD; font-size: 13.5px; margin: 0;">Crucial Organizational Updates & Strategic Alignment</p>
+        </div>
+
+        <div style="font-size: 16px; font-weight: 600; color: #F8FAFC; margin-bottom: 10px;">Dear ${userName}, 👋</div>
+        <p style="font-size: 14px; line-height: 1.6; color: #CBD5E1; margin: 0 0 16px 0;">
+          You are invited and required to attend today’s company-wide <strong>General Meeting</strong> scheduled for <strong>8:00 PM IST</strong> on <strong>Google Meet</strong>. Leadership will be discussing key organization updates, essential operational decisions, project deliverables, and strategic roadmaps.
+        </p>
+
+        <!-- COUNTDOWN BOX -->
+        <div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border: 1px solid #0284C7; border-radius: 12px; padding: 18px 12px; text-align: center; margin: 18px 0; box-shadow: 0 8px 20px -4px rgba(2, 132, 199, 0.25);">
+          <div style="font-size: 11px; font-weight: 800; color: #38BDF8; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;">⚡ COUNTDOWN TO LIVE SESSION</div>
+          <table style="width: 100%; max-width: 360px; margin: 0 auto; border-collapse: separate; border-spacing: 6px;">
+            <tr>
+              <td style="background: #0B0F19; border: 1px solid #334155; border-radius: 8px; padding: 8px 4px; text-align: center; width: 25%;">
+                <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; font-family: monospace;">00</div>
+                <div style="font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Days</div>
+              </td>
+              <td style="background: #0B0F19; border: 1px solid #334155; border-radius: 8px; padding: 8px 4px; text-align: center; width: 25%;">
+                <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; font-family: monospace;">01</div>
+                <div style="font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Hours</div>
+              </td>
+              <td style="background: #0B0F19; border: 1px solid #334155; border-radius: 8px; padding: 8px 4px; text-align: center; width: 25%;">
+                <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; font-family: monospace;">45</div>
+                <div style="font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Mins</div>
+              </td>
+              <td style="background: #0369A1; border: 1px solid #0EA5E9; border-radius: 8px; padding: 8px 4px; text-align: center; width: 25%;">
+                <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; font-family: monospace;">8 PM</div>
+                <div style="font-size: 9px; font-weight: 700; color: #E0F2FE; text-transform: uppercase;">LIVE</div>
+              </td>
+            </tr>
+          </table>
+          <div style="font-size: 12px; color: #94A3B8; margin-top: 10px; font-weight: 500;">
+            🕒 Scheduled Time: <strong>${dateTimeStr}</strong>
+          </div>
+        </div>
+
+        <!-- MANDATORY NOTICE BANNER -->
+        <div style="background: linear-gradient(135deg, #450A0A 0%, #7F1D1D 50%, #991B1B 100%); border: 1px solid #EF4444; border-radius: 10px; padding: 14px 16px; margin: 18px 0; color: #FFFFFF; box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3);">
+          <div style="font-size: 12.5px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: #FEE2E2; margin-bottom: 4px;">
+            🚨 ATTENDANCE IS STRICTLY MANDATORY
+          </div>
+          <p style="font-size: 12.5px; line-height: 1.5; color: #FCA5A5; margin: 0;">
+            Attendance will be logged and reviewed directly by executive administration. All software associates, interns, and core team members must be present. Prior formal approval is required for any unavoidable absence.
+          </p>
+        </div>
+
+        <!-- MEETING DETAILS TABLE -->
+        <table style="width: 100%; border-collapse: collapse; background-color: #1E293B; border: 1px solid #334155; border-radius: 10px; overflow: hidden; margin: 18px 0;">
+          <tr>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #334155; font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 10.5px; width: 32%;">📅 Date & Day</td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #334155; color: #F8FAFC; font-weight: 600; font-size: 13px;">Today, Friday • Oct 02, 2026</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #334155; font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 10.5px;">⏰ Time & Duration</td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #334155; color: #F8FAFC; font-weight: 600; font-size: 13px;"><strong>${dateTimeStr}</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #334155; font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 10.5px;">📹 Platform</td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #334155; color: #38BDF8; font-weight: 600; font-size: 13px;">Google Meet (Live Room)</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 14px; font-weight: 700; color: #94A3B8; text-transform: uppercase; font-size: 10.5px;">🔗 Meeting Link</td>
+            <td style="padding: 10px 14px; word-break: break-all; font-size: 13px;">
+              <a href="${meetingUrl}" target="_blank" style="color: #38BDF8; font-weight: 700; text-decoration: underline;">${meetingUrl}</a>
+            </td>
+          </tr>
+        </table>
+
+        <!-- AGENDA -->
+        <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; margin: 18px 0;">
+          <div style="font-size: 12px; font-weight: 700; color: #38BDF8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">🎯 Agenda & Discussion Topics</div>
+          <div style="font-size: 12.5px; color: #E2E8F0; line-height: 1.5;">
+            ${customAgenda || `
+              📌 <strong>1. Critical Organizational Updates:</strong> Strategy, roadmap, and company priorities.<br/>
+              📌 <strong>2. Project Deliverables:</strong> Timelines, sprint targets, and milestones.<br/>
+              📌 <strong>3. Operational Directives:</strong> Best practices, workflow standards, and policies.<br/>
+              📌 <strong>4. Open Floor Q&A:</strong> Interactive dialogue and team alignment.
+            `}
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align: center; margin: 24px 0 16px 0;">
+          <a href="${meetingUrl}" target="_blank" style="background: linear-gradient(135deg, #0284C7 0%, #2563EB 50%, #7C3AED 100%); color: #FFFFFF !important; font-size: 15px; font-weight: 800; text-decoration: none; padding: 14px 32px; border-radius: 8px; display: inline-block; box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);">
+            🚀 JOIN GOOGLE MEET (8:00 PM)
+          </a>
+          <div style="margin-top: 12px;">
+            <a href="${calendarLink}" target="_blank" style="background: #1E293B; color: #38BDF8 !important; border: 1px solid #38BDF8; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 6px; display: inline-block;">
+              📅 Add to Google Calendar / Sync Reminder
+            </a>
+          </div>
+        </div>
+
+        <!-- INSTRUCTIONS -->
+        <div style="background: #0F172A; border-left: 3px solid #0EA5E9; border-radius: 4px; padding: 12px 14px; margin: 18px 0; font-size: 12px; color: #94A3B8; line-height: 1.5;">
+          <strong>Instructions for Attendees:</strong><br/>
+          • Please join by <strong>7:55 PM IST</strong> (5 minutes early).<br/>
+          • Ensure your audio/video devices are tested before connecting.<br/>
+          • Mute microphone upon entry until the Q&A segment.
+        </div>
+      </div>
+    `;
+
+    return this.sendRealEmailAsync(to, subject, 'MANDATORY_GENERAL_MEETING', body);
   }
 }
 
