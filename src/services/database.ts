@@ -779,6 +779,126 @@ const defaultUsers: User[] = [
     designation: 'AI Intern',
     organization: 'Gonexora Techs',
     password: 'Vedha@123'
+  },
+  {
+    id: 'saranyassaro3@gmail.com',
+    email: 'saranyassaro3@gmail.com',
+    name: 'SARANYA.S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Data Science Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'jobijohny27@gmail.com',
+    email: 'jobijohny27@gmail.com',
+    name: 'Jobi Sherina J S',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'UI/UX Designer Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'arasu2005@gmail.com',
+    email: 'arasu2005@gmail.com',
+    name: 'Arasu M',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Data Science Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'betshiya2005@gmail.com',
+    email: 'betshiya2005@gmail.com',
+    name: 'Betshiya S.G',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+    designation: 'Data Analytics Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'joel21026@gmail.com',
+    email: 'joel21026@gmail.com',
+    name: 'Joel M',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    designation: 'AI/ML Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'karthikeyan21026@gmail.com',
+    email: 'karthikeyan21026@gmail.com',
+    name: 'Karthikeyan M',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+    designation: 'AI/ML Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'aarthi94428@gmail.com',
+    email: 'aarthi94428@gmail.com',
+    name: 'T. Aarthi',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    designation: 'Artificial Intelligence Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'ananthi877831@gmail.com',
+    email: 'ananthi877831@gmail.com',
+    name: 'T.Ananthi',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Artificial Intelligence Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'priyadharshinipanneerselvam24@gmail.com',
+    email: 'priyadharshinipanneerselvam24@gmail.com',
+    name: 'Priyadharshini Panneerselvam',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Product Lead',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'priyadharshini@nexora.com',
+    email: 'priyadharshini@nexora.com',
+    name: 'Priyadharshini Panneerselvam',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    designation: 'Product Lead',
+    organization: 'Gonexora Techs',
+    password: 'Priya@123'
+  },
+  {
+    id: 'rkragul008@gmail.com',
+    email: 'rkragul008@gmail.com',
+    name: 'Ragul Kumar',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    designation: 'Business Analyst',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'shakthij2004@gmail.com',
+    email: 'shakthij2004@gmail.com',
+    name: 'Shakthi J',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    designation: 'Data Analyst',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
   }
 ];
 
@@ -1646,17 +1766,34 @@ export class NexoraDatabase {
   }
 
   // Users
-  // Users
   getUsers(): User[] {
     const deletedUserKeys = getStorageItem<string[]>('nexora_deleted_users', []);
-    let storedUsers = getStorageItem<User[] | null>('nexora_users', null);
+    const storedUsers = getStorageItem<User[] | null>('nexora_users', null) || [];
 
-    if (!storedUsers) {
-      storedUsers = defaultUsers;
-    }
+    // Always merge defaultUsers so any newly added students are instantly present
+    // even for browsers that previously stored an older roster in localStorage
+    const userMap = new Map<string, User>();
+
+    // 1. Seed with defaultUsers
+    defaultUsers.forEach(u => {
+      if (!u || !u.email) return;
+      userMap.set(u.email.trim().toLowerCase(), { ...u });
+    });
+
+    // 2. Overlay any customized user properties or new users added to localStorage
+    storedUsers.forEach(u => {
+      if (!u || !u.email) return;
+      const key = u.email.trim().toLowerCase();
+      const existing = userMap.get(key);
+      if (existing) {
+        userMap.set(key, { ...existing, ...u });
+      } else {
+        userMap.set(key, u);
+      }
+    });
 
     // Filter out deprecated demo accounts, guest accounts, and deleted accounts
-    const validUsers = storedUsers.filter(u => {
+    const validUsers = Array.from(userMap.values()).filter(u => {
       if (!u || !u.email) return false;
       const email = u.email.trim().toLowerCase();
       const id = (u.id || '').trim().toLowerCase();
@@ -1670,18 +1807,8 @@ export class NexoraDatabase {
       return true;
     });
 
-    // Deduplicate by clean lowercase email
-    const uniqueMap = new Map<string, User>();
-    validUsers.forEach(u => {
-      const key = u.email.trim().toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, u);
-      }
-    });
-
-    const uniqueUsers = Array.from(uniqueMap.values());
-    setStorageItem('nexora_users', uniqueUsers);
-    return uniqueUsers;
+    setStorageItem('nexora_users', validUsers);
+    return validUsers;
   }
 
   getUser(email: string): User | undefined {

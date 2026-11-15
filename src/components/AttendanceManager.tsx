@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   UserCheck, 
@@ -103,6 +103,37 @@ export const AttendanceManager: React.FC = () => {
       remarks: ''
     }));
   });
+
+  // Keep roster automatically synchronized with all active students in the directory
+  useEffect(() => {
+    setRoster(prev => {
+      const prevMap = new Map(prev.map(p => [p.email.toLowerCase(), p]));
+      let hasChanges = prev.length !== allUsers.length;
+      const updated: StudentRosterItem[] = allUsers.map(u => {
+        const existing = prevMap.get(u.email.toLowerCase());
+        if (existing) {
+          return {
+            ...existing,
+            name: u.name || existing.name,
+            designation: u.designation || existing.designation,
+            avatarUrl: u.avatarUrl || existing.avatarUrl
+          };
+        }
+        hasChanges = true;
+        const initialStatus: 'PRESENT' | 'ABSENT' = defaultPresentEmails.includes(u.email.toLowerCase()) ? 'PRESENT' : 'ABSENT';
+        return {
+          id: u.id || u.email,
+          name: u.name,
+          email: u.email,
+          designation: u.designation || 'Software Associate',
+          avatarUrl: u.avatarUrl,
+          status: initialStatus,
+          remarks: ''
+        };
+      });
+      return hasChanges ? updated : prev;
+    });
+  }, [allUsers]);
 
   // Calculate Metrics
   const totalStudents = roster.length;
@@ -680,6 +711,14 @@ export const AttendanceManager: React.FC = () => {
               className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
             >
               Invert
+            </button>
+            <button
+              onClick={handleResetToDefault}
+              className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/40 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800/60 text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center space-x-1"
+              title="Sync full student directory from database"
+            >
+              <RefreshCw size={12} />
+              <span>Sync All Students</span>
             </button>
           </div>
         </div>
