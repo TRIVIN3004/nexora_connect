@@ -899,6 +899,46 @@ const defaultUsers: User[] = [
     designation: 'Data Analyst',
     organization: 'Gonexora Techs',
     password: 'Nexora@123'
+  },
+  {
+    id: 'anukalai1511@gmail.com',
+    email: 'anukalai1511@gmail.com',
+    name: 'Anustika',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Data Analytics Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'anustika@nexora.com',
+    email: 'anustika@nexora.com',
+    name: 'Anustika',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    designation: 'Data Analytics Intern',
+    organization: 'Gonexora Techs',
+    password: 'Anu@123'
+  },
+  {
+    id: 'yamunashanmugam19122006@gmail.com',
+    email: 'yamunashanmugam19122006@gmail.com',
+    name: 'Yamuna',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+    designation: 'Full Stack Developer Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'yamuna@nexora.com',
+    email: 'yamuna@nexora.com',
+    name: 'Yamuna',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+    designation: 'Full Stack Developer Intern',
+    organization: 'Gonexora Techs',
+    password: 'Yamuna@123'
   }
 ];
 
