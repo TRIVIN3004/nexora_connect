@@ -939,6 +939,26 @@ const defaultUsers: User[] = [
     designation: 'Full Stack Developer Intern',
     organization: 'Gonexora Techs',
     password: 'Yamuna@123'
+  },
+  {
+    id: 'bharathi.mvbv@gmail.com',
+    email: 'bharathi.mvbv@gmail.com',
+    name: 'Bharathi priya M',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    designation: 'Full Stack Developer Intern',
+    organization: 'Gonexora Techs',
+    password: 'Nexora@123'
+  },
+  {
+    id: 'bharathipriya@nexora.com',
+    email: 'bharathipriya@nexora.com',
+    name: 'Bharathi priya M',
+    role: 'EMPLOYEE',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    designation: 'Full Stack Developer Intern',
+    organization: 'Gonexora Techs',
+    password: 'Bharathi@123'
   }
 ];
 
