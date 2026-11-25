@@ -31,7 +31,8 @@ dist-ssr
 # Issued certificates, offer letters, and local HR documents
 public/certificates/
 internship offer letters/
-Gonexora_Techs_*.pdf
-public/Gonexora_Techs_*.pdf
+*.pdf
+*.docx
+temp_*.html
 public/sample_certificate_preview*.png
 
